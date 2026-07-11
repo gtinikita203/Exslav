@@ -52,11 +52,25 @@ jobs:
         with:
           path: ~/.gradle
           key: gradle-debug-${{ hashFiles('**/*.gradle.kts') }}
+      - name: Strip AAR symbols
+        run: |
+          STRIP="${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip"
+          AAR="app/libs/libexclavecore.aar"
+          TMP=$(mktemp -d)
+          cp "$AAR" "$TMP/lib.aar"
+          cd "$TMP"
+          unzip -q lib.aar
+          find . -name "*.so" -exec "$STRIP" --strip-unneeded {} \;
+          zip -qr lib_stripped.aar . --exclude lib.aar
+          cp lib_stripped.aar "$OLDPWD/$AAR"
       - name: Gradle Build
         run: |
           echo "sdk.dir=${ANDROID_HOME}" > local.properties
           ./gradlew :app:downloadAssets
-          ./gradlew :app:assembleOssDebug
+          ./gradlew :app:assembleOssDebug \
+            -Pandroid.splits.abi.enable=true \
+            -Pandroid.splits.abi.include=arm64-v8a,armeabi-v7a \
+            -Pandroid.splits.abi.universalApk=false
           APK="app/build/outputs/apk/oss/debug"
           echo "APK=$APK" >> $GITHUB_ENV
       - name: Upload Artifacts

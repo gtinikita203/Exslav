@@ -4,3 +4,6 @@
 [submodule "plugin/shadowquic/src/main/rust/shadowquic"]
 	path = plugin/shadowquic/src/main/rust/shadowquic
 	url = https://github.com/spongebob888/shadowquic
+[submodule "wdtt"]
+	path = wdtt
+	url = https://github.com/SpaceNeuroX/proxy-turn-vk-android

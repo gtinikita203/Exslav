@@ -67,7 +67,7 @@ fun parseQwdttUri(raw: String): WdttBean? {
 
             if (parts.size >= 4) {
                 val dtlsPort = parts[0].toIntOrNull() ?: return null
-                val password = parts[3]
+                val pass = parts[3]
                 val hashes = if (parts.size > 4) parts[4] else ""
 
                 return WdttBean().apply {
@@ -75,7 +75,7 @@ fun parseQwdttUri(raw: String): WdttBean? {
                     serverAddress = host
                     serverPort = dtlsPort
                     vkHashes = hashes
-                    password = password
+                    password = pass
                     workers = 24
                 }
             }

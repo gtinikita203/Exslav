@@ -261,6 +261,8 @@ object Key {
     const val SERVER_SING_MUX_MAX_STREAMS = "serverSingMuxMaxStreams"
     const val SERVER_SING_MUX_PADDING = "serverSingMuxPadding"
 
+    const val WDTT_WORKERS = "wdttWorkers"
+
     const val EXPERIMENTAL_FLAGS = "experimentalFlags"
 
     const val BALANCER_TYPE = "balancerType"

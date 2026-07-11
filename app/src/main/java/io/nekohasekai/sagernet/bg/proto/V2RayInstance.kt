@@ -38,11 +38,15 @@ import io.nekohasekai.sagernet.fmt.naive.NaiveBean
 import io.nekohasekai.sagernet.fmt.naive.buildNaiveConfig
 import io.nekohasekai.sagernet.fmt.shadowquic.ShadowQUICBean
 import io.nekohasekai.sagernet.fmt.shadowquic.buildShadowQUICConfig
+import io.nekohasekai.sagernet.fmt.wdtt.WdttBean
+import io.nekohasekai.sagernet.fmt.wireguard.WireGuardBean
+import io.nekohasekai.sagernet.fmt.wireguard.parseWireGuardConfig
 import io.nekohasekai.sagernet.ktx.*
 import io.nekohasekai.sagernet.plugin.PluginManager
 import kotlinx.coroutines.*
 import libexclavecore.V2RayInstance
 import java.io.File
+import java.net.DatagramSocket
 
 abstract class V2RayInstance(
     val profile: ProxyEntity,
@@ -52,6 +56,7 @@ abstract class V2RayInstance(
     lateinit var v2rayPoint: V2RayInstance
     private lateinit var wsForwarder: WebView
     private lateinit var shForwarder: WebView
+    private var wdttProcess: Process? = null
 
     val pluginPath = hashMapOf<String, PluginManager.InitResult>()
     val pluginConfigs = hashMapOf<Int, Pair<Int, String>>()
@@ -76,6 +81,10 @@ abstract class V2RayInstance(
 
     open suspend fun init() {
         v2rayPoint = V2RayInstance()
+        if (profile.requireBean() is WdttBean) {
+            val wgBean = initWdtt(profile.wdttBean!!)
+            profile.putBean(wgBean)
+        }
         buildConfig()
         for ((_, chain) in config.index) {
             chain.entries.forEachIndexed { _, (triple, profile) ->
@@ -238,6 +247,9 @@ abstract class V2RayInstance(
     override fun close() {
         if (isClosed) return
 
+        wdttProcess?.destroy()
+        wdttProcess = null
+
         for (instance in externalInstances.values) {
             runCatching {
                 instance.close()
@@ -271,6 +283,61 @@ abstract class V2RayInstance(
         }
 
         isClosed = true
+    }
+
+    private suspend fun initWdtt(bean: WdttBean): WireGuardBean {
+        val context = SagerNet.application
+        val exe = File(context.applicationInfo.nativeLibraryDir, "libclient.so")
+        if (!exe.exists() || !exe.canExecute()) error("wdtt: libclient.so not found in nativeLibraryDir")
+
+        val listenPort = DatagramSocket(0).use { it.localPort }
+        val peer = "${bean.serverAddress}:${bean.serverPort}"
+
+        val cmd = mutableListOf(
+            exe.absolutePath,
+            "-peer", peer,
+            "-n", bean.workers.toString(),
+            "-listen", "127.0.0.1:$listenPort",
+            "-captcha-mode", "rjs",
+            "-vk-auth", "anonymous",
+        )
+        if (bean.vkHashes.isNotBlank()) cmd.addAll(listOf("-vk", bean.vkHashes))
+        if (bean.password.isNotBlank()) cmd.addAll(listOf("-password", bean.password))
+
+        val proc = ProcessBuilder(cmd).redirectErrorStream(true).start()
+        wdttProcess = proc
+
+        val wgConfig = try {
+            withTimeout(120_000L) {
+                readWdttWgConfig(proc)
+            }
+        } catch (e: Exception) {
+            proc.destroy()
+            wdttProcess = null
+            error("wdtt: failed to get WireGuard config: ${e.message}")
+        }
+
+        return parseWireGuardConfig(wgConfig).firstOrNull()
+            ?: error("wdtt: could not parse WireGuard config")
+    }
+
+    private suspend fun readWdttWgConfig(proc: Process): String = withContext(Dispatchers.IO) {
+        val reader = proc.inputStream.bufferedReader()
+        val configBuilder = StringBuilder()
+        var collecting = false
+        var line: String?
+        while (reader.readLine().also { line = it } != null) {
+            val l = line!!
+            when {
+                l.contains("╔") && l.contains("WireGuard") -> {
+                    collecting = true
+                    configBuilder.clear()
+                }
+                collecting && l.contains("╚") -> return@withContext configBuilder.toString().trim()
+                collecting && l.contains("║") -> configBuilder.appendLine(l.replace("║", "").trim())
+            }
+        }
+        error("wdtt: process exited before sending WireGuard config")
     }
 
 }

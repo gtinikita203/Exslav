@@ -30,7 +30,9 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: 1.26.5
-          cache-dependency-path: "library/core/go.sum"
+          cache-dependency-path: |
+            library/core/go.sum
+            wdtt/go_client/go.sum
       - name: Setup Go Mobile
         # https://github.com/golang/mobile/blob/c31d5b91ecc32c0d598b8fe8457d244ca0b4e815/cmd/gomobile/init.go#L83
         run: |
@@ -52,6 +54,12 @@ jobs:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
           ./run lib core
+      - name: Build wdtt native libs
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          cd wdtt && bash scripts/build-native-libs.sh
+          cp -r app/src/main/jniLibs/* ../app/src/main/jniLibs/
       - name: Upload Artifacts
         uses: actions/upload-artifact@v7
         with:

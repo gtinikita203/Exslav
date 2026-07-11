@@ -31,6 +31,7 @@ import io.nekohasekai.sagernet.database.SagerDatabase
 import io.nekohasekai.sagernet.database.SubscriptionBean
 import io.nekohasekai.sagernet.fmt.AbstractBean
 import io.nekohasekai.sagernet.fmt.shadowsocks.parseShadowsocksConfig
+import io.nekohasekai.sagernet.fmt.wdtt.parseWdttConfig
 import io.nekohasekai.sagernet.fmt.wireguard.parseWireGuardConfig
 import io.nekohasekai.sagernet.ktx.*
 import libexclavecore.Libexclavecore
@@ -283,6 +284,11 @@ object RawUpdater : GroupUpdater() {
         } catch (_: Exception) {}
         try {
             parseWireGuardConfig(text).takeIf { it.isNotEmpty() }?.let {
+                return it
+            }
+        } catch (_: Exception) {}
+        try {
+            parseWdttConfig(text).takeIf { it.isNotEmpty() }?.let {
                 return it
             }
         } catch (_: Exception) {}

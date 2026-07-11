@@ -18,7 +18,6 @@
             app:title="@string/server_port"
             app:useSimpleSummaryProvider="true" />
         <EditTextPreference
-            app:icon="@drawable/ic_settings_input_antenna"
             app:key="wdttWorkers"
             app:title="@string/wdtt_workers"
             app:useSimpleSummaryProvider="true" />

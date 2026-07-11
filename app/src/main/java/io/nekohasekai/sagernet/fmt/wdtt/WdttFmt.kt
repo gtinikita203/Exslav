@@ -53,12 +53,41 @@ fun parseWdttObject(obj: JSONObject): WdttBean? {
 
 fun parseQwdttUri(raw: String): WdttBean? {
     return try {
-        val uri = Uri.parse(raw.replace("qwdtt:config", "qwdtt://config"))
+        val fullUri = raw.replace("qwdtt:config", "qwdtt://config")
+
+        // Format: wdtt://IP:DTLS_PORT:WG_PORT:LOCAL_PORT:PASSWORD:HASH1,HASH2,...
+        if (fullUri.startsWith("wdtt://")) {
+            val afterScheme = fullUri.substringAfter("://")
+            val colonIdx = afterScheme.indexOf(":")
+            if (colonIdx <= 0) return null
+
+            val host = afterScheme.substring(0, colonIdx)
+            val rest = afterScheme.substring(colonIdx + 1)
+            val parts = rest.split(":", limit = 5)
+
+            if (parts.size >= 4) {
+                val dtlsPort = parts[0].toIntOrNull() ?: return null
+                val password = parts[3]
+                val hashes = if (parts.size > 4) parts[4] else ""
+
+                return WdttBean().apply {
+                    name = "WDTT $host"
+                    serverAddress = host
+                    serverPort = dtlsPort
+                    vkHashes = hashes
+                    password = password
+                    workers = 24
+                }
+            }
+        }
+
+        // Fallback: query params
+        val uri = Uri.parse(fullUri)
         val peer = uri.getQueryParameter("peer") ?: return null
-        val (host, port) = splitPeer(peer)
+        val (addr, port) = splitPeer(peer)
         WdttBean().apply {
             name = uri.getQueryParameter("name") ?: "WDTT"
-            serverAddress = host
+            serverAddress = addr
             serverPort = port
             vkHashes = uri.getQueryParameter("hashes") ?: ""
             password = uri.getQueryParameter("pass") ?: uri.getQueryParameter("password") ?: ""

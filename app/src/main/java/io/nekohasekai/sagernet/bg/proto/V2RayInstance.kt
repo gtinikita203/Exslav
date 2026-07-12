@@ -21,6 +21,7 @@ package io.nekohasekai.sagernet.bg.proto
 
 import android.annotation.SuppressLint
 import android.os.SystemClock
+import android.util.Log
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -288,9 +289,15 @@ abstract class V2RayInstance(
     private suspend fun initWdtt(bean: WdttBean): WireGuardBean {
         val context = SagerNet.application
         val exe = File(context.applicationInfo.nativeLibraryDir, "libclient.so")
-        Logs.i("wdtt: checking ${exe.absolutePath} exists=${exe.exists()} canExecute=${exe.canExecute()}")
-        if (!exe.exists()) error("wdtt: libclient.so not found at ${exe.absolutePath}")
-        if (!exe.canExecute()) error("wdtt: libclient.so not executable, chmod required")
+        Log.i("WDTT", "Checking ${exe.absolutePath} exists=${exe.exists()} canExecute=${exe.canExecute()}")
+        if (!exe.exists()) {
+            Log.e("WDTT", "libclient.so not found at ${exe.absolutePath}")
+            error("wdtt: libclient.so not found at ${exe.absolutePath}")
+        }
+        if (!exe.canExecute()) {
+            Log.e("WDTT", "libclient.so not executable at ${exe.absolutePath}")
+            error("wdtt: libclient.so not executable, chmod required")
+        }
 
         val listenPort = DatagramSocket(0).use { it.localPort }
         val peer = "${bean.serverAddress}:${bean.serverPort}"
@@ -310,12 +317,14 @@ abstract class V2RayInstance(
         wdttProcess = proc
 
         val wgConfig = try {
+            Log.i("WDTT", "Waiting for WG config from $peer with workers=${bean.workers}...")
             withTimeout(120_000L) {
                 readWdttWgConfig(proc)
             }
         } catch (e: Exception) {
             proc.destroy()
             wdttProcess = null
+            Log.e("WDTT", "Failed to get WG config", e)
             error("wdtt: failed to get WireGuard config: ${e.message}")
         }
 

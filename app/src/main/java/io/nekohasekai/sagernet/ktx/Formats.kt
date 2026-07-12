@@ -38,6 +38,7 @@ import io.nekohasekai.sagernet.fmt.ssh.parseSSH
 import io.nekohasekai.sagernet.fmt.trusttunnel.parseTrustTunnel
 import io.nekohasekai.sagernet.fmt.tuic5.parseTuic
 import io.nekohasekai.sagernet.fmt.v2ray.parseV2Ray
+import io.nekohasekai.sagernet.fmt.wdtt.parseQwdttUri
 import io.nekohasekai.sagernet.fmt.wireguard.parseWireGuard
 import kotlin.io.encoding.Base64
 
@@ -112,6 +113,10 @@ fun parseShareLinks(text: String): List<AbstractBean> {
         } else if (startsWith("wireguard://", ignoreCase = true) || startsWith("wg://", ignoreCase = true)) {
             runCatching {
                 entities.add(parseWireGuard(this))
+            }
+        } else if (startsWith("wdtt://", ignoreCase = true)) {
+            runCatching {
+                parseQwdttUri(this)?.let { entities.add(it) }
             }
         } else if (startsWith("mierus://", ignoreCase = true)) {
             runCatching {

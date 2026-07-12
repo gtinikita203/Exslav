@@ -540,7 +540,8 @@ class MainActivity : ThemedActivity(),
         if (profileId == 0L) return
 
         if (isCurrent) binding.stats.updateTraffic(
-            stats.txRateProxy, stats.rxRateProxy
+            stats.txRateProxy.takeIf { it > 0 } ?: stats.txTotal,
+            stats.rxRateProxy.takeIf { it > 0 } ?: stats.rxTotal
         )
 
         runOnDefaultDispatcher {

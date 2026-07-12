@@ -307,8 +307,9 @@ abstract class V2RayInstance(
             "-peer", peer,
             "-n", bean.workers.toString(),
             "-listen", "127.0.0.1:$listenPort",
-            "-vk-anon-path", "legacy",
+            "-vk-anon-path", "vkcalls",
             "-vk-auth", "anonymous",
+            "-captcha-mode", "auto",
         )
         if (bean.vkHashes.isNotBlank()) cmd.addAll(listOf("-vk", bean.vkHashes))
         if (bean.password.isNotBlank()) cmd.addAll(listOf("-password", bean.password))

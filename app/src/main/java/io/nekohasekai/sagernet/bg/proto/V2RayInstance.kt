@@ -358,9 +358,12 @@ abstract class V2RayInstance(
                         configBuilder.clear()
                     }
                     collecting && l.contains("╚") -> {
+                        Log.i("WDTT", "Found WG config end marker")
                         // Read any remaining stderr before returning
                         stderrReader.readLines().forEach { stderrLog.append(it).append("\n") }
-                        return@withContext configBuilder.toString().trim()
+                        val result = configBuilder.toString().trim()
+                        Log.i("WDTT", "Returning WG config of length ${result.length}")
+                        return@withContext result
                     }
                     collecting && l.contains("║") -> configBuilder.appendLine(l.replace("║", "").trim())
                 }

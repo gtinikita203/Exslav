@@ -301,9 +301,14 @@ abstract class V2RayInstance(
 
         val listenPort = DatagramSocket(0).use { it.localPort }
         val peer = "${bean.serverAddress}:${bean.serverPort}"
+        val deviceId = android.provider.Settings.Secure.getString(
+            SagerNet.application.contentResolver,
+            android.provider.Settings.Secure.ANDROID_ID
+        ) ?: "unknown"
 
         val cmd = mutableListOf(
             exe.absolutePath,
+            "-device-id", deviceId,
             "-peer", peer,
             "-n", bean.workers.toString(),
             "-listen", "127.0.0.1:$listenPort",

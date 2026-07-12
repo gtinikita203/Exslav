@@ -336,7 +336,7 @@ abstract class V2RayInstance(
         Log.i("WDTT", "Got WG config, parsing:\n$wgConfig")
         val parsed = parseWireGuardConfig(wgConfig)
         Log.i("WDTT", "Parsed ${parsed.size} WG beans")
-        return parsed.firstOrNull()
+        return parsed.firstOrNull()?.applyDefaultValues()
             ?: error("wdtt: could not parse WireGuard config")
     }
 

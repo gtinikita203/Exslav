@@ -251,8 +251,12 @@ abstract class V2RayInstance(
     override fun close() {
         if (isClosed) return
 
-        wdttProcess?.destroy()
-        wdttProcess = null
+        if (wdttProcess != null) {
+            Log.i("WDTT", "Destroying wdtt process")
+            wdttProcess?.destroy()
+            wdttProcess = null
+            Log.i("WDTT", "wdtt process destroyed")
+        }
 
         for (instance in externalInstances.values) {
             runCatching {

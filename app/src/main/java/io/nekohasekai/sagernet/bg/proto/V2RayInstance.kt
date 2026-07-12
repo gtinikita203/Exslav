@@ -313,10 +313,11 @@ abstract class V2RayInstance(
         if (bean.vkHashes.isNotBlank()) cmd.addAll(listOf("-vk", bean.vkHashes))
         if (bean.password.isNotBlank()) cmd.addAll(listOf("-password", bean.password))
 
-        val proc = ProcessBuilder(cmd).redirectErrorStream(true).start()
+        val proc = ProcessBuilder(cmd).start()
         wdttProcess = proc
 
         val wgConfig = try {
+            Log.i("WDTT", "Starting subprocess: ${cmd.joinToString(" ")}")
             Log.i("WDTT", "Waiting for WG config from $peer with workers=${bean.workers}...")
             withTimeout(120_000L) {
                 readWdttWgConfig(proc)
@@ -336,32 +337,32 @@ abstract class V2RayInstance(
         val stdoutReader = proc.inputStream.bufferedReader()
         val stderrReader = proc.errorStream.bufferedReader()
         val configBuilder = StringBuilder()
+        val stderrLog = StringBuilder()
         var collecting = false
         var line: String?
-
-        // Collect stderr in background
-        val stderrLog = StringBuilder()
-        Thread {
-            try {
-                while (stderrReader.readLine().also { line = it } != null) {
-                    stderrLog.append(line).append("\n")
-                }
-            } catch (_: Exception) {}
-        }.start()
 
         try {
             while (stdoutReader.readLine().also { line = it } != null) {
                 val l = line!!
+                Log.d("WDTT", "stdout: $l")
                 when {
                     l.contains("╔") && l.contains("WireGuard") -> {
                         collecting = true
                         configBuilder.clear()
                     }
-                    collecting && l.contains("╚") -> return@withContext configBuilder.toString().trim()
+                    collecting && l.contains("╚") -> {
+                        // Read any remaining stderr before returning
+                        stderrReader.readLines().forEach { stderrLog.append(it).append("\n") }
+                        return@withContext configBuilder.toString().trim()
+                    }
                     collecting && l.contains("║") -> configBuilder.appendLine(l.replace("║", "").trim())
                 }
             }
+            // Read stderr after stdout is closed
+            stderrReader.readLines().forEach { stderrLog.append(it).append("\n") }
         } catch (e: Exception) {
+            Log.e("WDTT", "Exception reading subprocess output", e)
+            stderrReader.readLines().forEach { stderrLog.append(it).append("\n") }
             error("wdtt: failed reading stdout: ${e.message}\nstderr: $stderrLog")
         }
         error("wdtt: process exited without WireGuard config\nstderr: $stderrLog")

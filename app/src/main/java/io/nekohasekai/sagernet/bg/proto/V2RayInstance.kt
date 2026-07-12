@@ -83,8 +83,11 @@ abstract class V2RayInstance(
     open suspend fun init() {
         v2rayPoint = V2RayInstance()
         if (profile.requireBean() is WdttBean) {
+            Log.i("WDTT", "Detected WDTT bean, converting to WireGuard")
             val wgBean = initWdtt(profile.wdttBean!!)
+            Log.i("WDTT", "Converted to WG bean, updating profile")
             profile.putBean(wgBean)
+            Log.i("WDTT", "Profile updated with WG bean")
         }
         buildConfig()
         for ((_, chain) in config.index) {
@@ -330,7 +333,10 @@ abstract class V2RayInstance(
             error("wdtt: failed to get WireGuard config: ${e.message}")
         }
 
-        return parseWireGuardConfig(wgConfig).firstOrNull()
+        Log.i("WDTT", "Got WG config, parsing:\n$wgConfig")
+        val parsed = parseWireGuardConfig(wgConfig)
+        Log.i("WDTT", "Parsed ${parsed.size} WG beans")
+        return parsed.firstOrNull()
             ?: error("wdtt: could not parse WireGuard config")
     }
 

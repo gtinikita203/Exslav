@@ -288,7 +288,9 @@ abstract class V2RayInstance(
     private suspend fun initWdtt(bean: WdttBean): WireGuardBean {
         val context = SagerNet.application
         val exe = File(context.applicationInfo.nativeLibraryDir, "libclient.so")
-        if (!exe.exists() || !exe.canExecute()) error("wdtt: libclient.so not found in nativeLibraryDir")
+        Logs.i("wdtt: checking ${exe.absolutePath} exists=${exe.exists()} canExecute=${exe.canExecute()}")
+        if (!exe.exists()) error("wdtt: libclient.so not found at ${exe.absolutePath}")
+        if (!exe.canExecute()) error("wdtt: libclient.so not executable, chmod required")
 
         val listenPort = DatagramSocket(0).use { it.localPort }
         val peer = "${bean.serverAddress}:${bean.serverPort}"
@@ -322,22 +324,38 @@ abstract class V2RayInstance(
     }
 
     private suspend fun readWdttWgConfig(proc: Process): String = withContext(Dispatchers.IO) {
-        val reader = proc.inputStream.bufferedReader()
+        val stdoutReader = proc.inputStream.bufferedReader()
+        val stderrReader = proc.errorStream.bufferedReader()
         val configBuilder = StringBuilder()
         var collecting = false
         var line: String?
-        while (reader.readLine().also { line = it } != null) {
-            val l = line!!
-            when {
-                l.contains("╔") && l.contains("WireGuard") -> {
-                    collecting = true
-                    configBuilder.clear()
+
+        // Collect stderr in background
+        val stderrLog = StringBuilder()
+        Thread {
+            try {
+                while (stderrReader.readLine().also { line = it } != null) {
+                    stderrLog.append(line).append("\n")
                 }
-                collecting && l.contains("╚") -> return@withContext configBuilder.toString().trim()
-                collecting && l.contains("║") -> configBuilder.appendLine(l.replace("║", "").trim())
+            } catch (_: Exception) {}
+        }.start()
+
+        try {
+            while (stdoutReader.readLine().also { line = it } != null) {
+                val l = line!!
+                when {
+                    l.contains("╔") && l.contains("WireGuard") -> {
+                        collecting = true
+                        configBuilder.clear()
+                    }
+                    collecting && l.contains("╚") -> return@withContext configBuilder.toString().trim()
+                    collecting && l.contains("║") -> configBuilder.appendLine(l.replace("║", "").trim())
+                }
             }
+        } catch (e: Exception) {
+            error("wdtt: failed reading stdout: ${e.message}\nstderr: $stderrLog")
         }
-        error("wdtt: process exited before sending WireGuard config")
+        error("wdtt: process exited without WireGuard config\nstderr: $stderrLog")
     }
 
 }

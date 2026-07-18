@@ -49,6 +49,14 @@ class WdttSettingsActivity : ProfileSettingsActivity<WdttBean>() {
                 val currentVal = pref.value
                 "Всего потоков: $currentVal. Лимит: $maxWorkers (делится на 9, до 108)."
             }
+            setOnPreferenceChangeListener { _, newValue ->
+                val raw = newValue as Int
+                val snapped = ((raw + 4) / 9) * 9
+                if (snapped != raw) {
+                    listView.post { workersPref.value = snapped }
+                }
+                true
+            }
         }
 
         val updateWorkersLimit = {

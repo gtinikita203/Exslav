@@ -26,7 +26,6 @@
             app:key="wdttWorkers"
             app:title="@string/wdtt_workers"
             app:min="9"
-            app:stepSize="9"
             app:updatesContinuously="true"
             app:showSeekBarValue="true" />
     </PreferenceCategory>

@@ -27,7 +27,7 @@ class WdttSettingsActivity : ProfileSettingsActivity<WdttBean>() {
         name = DataStore.profileName
         serverAddress = DataStore.serverAddress
         serverPort = DataStore.serverPort
-        workers = (DataStore.serverWdttWorkers ?: 27).coerceIn(12, 108)
+        workers = (DataStore.serverWdttWorkers ?: 36).coerceAtMost(108)
         vkHashes = DataStore.serverWdttHashes ?: ""
     }
 
@@ -45,9 +45,9 @@ class WdttSettingsActivity : ProfileSettingsActivity<WdttBean>() {
                     .filter { it.isNotBlank() && it.length >= 16 }
                     .distinct()
                 val filledHashCount = uniqueHashes.size
-                val maxWorkers = filledHashCount.coerceAtLeast(1) * 27
+                val maxWorkers = (filledHashCount.coerceAtLeast(1) * 27).coerceAtMost(108)
                 val currentVal = pref.value
-                "Всего потоков: $currentVal. Для $filledHashCount хэш(ей) лимит: $maxWorkers потоков (27 на каждый хэш)."
+                "Всего потоков: $currentVal. Лимит: $maxWorkers (делится на 9, до 108)."
             }
         }
 
@@ -57,7 +57,7 @@ class WdttSettingsActivity : ProfileSettingsActivity<WdttBean>() {
                 .filter { it.isNotBlank() && it.length >= 16 }
                 .distinct()
             val filledHashCount = uniqueHashes.size
-            val maxWorkers = (filledHashCount.coerceAtLeast(1) * 27).coerceIn(12, 108)
+            val maxWorkers = (filledHashCount.coerceAtLeast(1) * 27).coerceAtMost(108)
 
             workersPref.max = maxWorkers
             if (workersPref.value > maxWorkers) {

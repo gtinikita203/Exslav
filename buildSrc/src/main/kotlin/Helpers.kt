@@ -107,6 +107,13 @@ fun Project.setupAppCommon(projectName: String = "") {
     val pwd = lp.getProperty("ALIAS_PASS") ?: System.getenv("ALIAS_PASS")
 
     androidApp.apply {
+        signingConfigs.getByName("debug") {
+            storeFile = rootProject.file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+
         if (keystorePwd != null) {
             signingConfigs.create("release") {
                 storeFile = rootProject.file("release.keystore")

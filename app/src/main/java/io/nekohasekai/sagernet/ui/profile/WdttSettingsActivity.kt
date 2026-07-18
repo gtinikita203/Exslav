@@ -27,7 +27,7 @@ class WdttSettingsActivity : ProfileSettingsActivity<WdttBean>() {
         name = DataStore.profileName
         serverAddress = DataStore.serverAddress
         serverPort = DataStore.serverPort
-        workers = (DataStore.serverWdttWorkers ?: 24).coerceIn(12, 108)
+        workers = (DataStore.serverWdttWorkers ?: 27).coerceIn(12, 108)
         vkHashes = DataStore.serverWdttHashes ?: ""
     }
 
@@ -51,9 +51,26 @@ class WdttSettingsActivity : ProfileSettingsActivity<WdttBean>() {
             }
         }
 
+        val updateWorkersLimit = {
+            val hashesText = DataStore.serverWdttHashes ?: ""
+            val uniqueHashes = hashesText.split(Regex("[,\\s\\n]+"))
+                .filter { it.isNotBlank() && it.length >= 16 }
+                .distinct()
+            val filledHashCount = uniqueHashes.size
+            val maxWorkers = (filledHashCount.coerceAtLeast(1) * 27).coerceIn(12, 108)
+
+            workersPref.max = maxWorkers
+            if (workersPref.value > maxWorkers) {
+                workersPref.value = maxWorkers
+            }
+        }
+
+        updateWorkersLimit()
+
         findPreference<EditTextPreference>(Key.VK_HASHES)!!.apply {
             setOnPreferenceChangeListener { _, _ ->
                 listView.post {
+                    updateWorkersLimit()
                     workersPref.summaryProvider = workersPref.summaryProvider
                 }
                 true

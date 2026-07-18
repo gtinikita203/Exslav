@@ -19,7 +19,7 @@ public class WdttBean extends AbstractBean {
         super.initializeDefaultValues();
         if (vkHashes == null) vkHashes = "";
         if (password == null) password = "";
-        if (workers == null) workers = 24;
+        if (workers == null) workers = 27;
     }
 
     @Override

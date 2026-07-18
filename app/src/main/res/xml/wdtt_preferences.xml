@@ -26,8 +26,8 @@
             app:key="wdttWorkers"
             app:title="@string/wdtt_workers"
             app:min="12"
-            android:max="108"
-            app:updatesContinuously="true" />
+            app:updatesContinuously="true"
+            app:showSeekBarValue="true" />
     </PreferenceCategory>
 
 </PreferenceScreen>

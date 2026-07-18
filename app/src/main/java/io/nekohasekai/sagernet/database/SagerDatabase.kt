@@ -108,9 +108,6 @@ import kotlinx.coroutines.launch
     ), AutoMigration(
         from = 36,
         to = 37,
-    ), AutoMigration(
-        from = 37,
-        to = 38,
     )]
 )
 @TypeConverters(value = [KryoConverters::class, GsonConverters::class])
@@ -132,7 +129,8 @@ abstract class SagerDatabase : RoomDatabase() {
                     SagerDatabase_Migration_8_9,
                     SagerDatabase_Migration_9_10,
                     SagerDatabase_Migration_10_11,
-                    SagerDatabase_Migration_11_12
+                    SagerDatabase_Migration_11_12,
+                    SagerDatabase_Migration_37_38
                 )
                 .fallbackToDestructiveMigrationOnDowngrade()
                 .allowMainThreadQueries()

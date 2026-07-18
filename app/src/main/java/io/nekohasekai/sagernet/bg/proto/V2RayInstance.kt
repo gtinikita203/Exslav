@@ -50,7 +50,7 @@ import java.io.File
 import java.net.DatagramSocket
 
 abstract class V2RayInstance(
-    val profile: ProxyEntity,
+    var profile: ProxyEntity,
 ) : AbstractInstance {
 
     lateinit var config: V2rayBuildResult
@@ -86,7 +86,7 @@ abstract class V2RayInstance(
             Log.i("WDTT", "Detected WDTT bean, converting to WireGuard")
             val wgBean = initWdtt(profile.wdttBean!!)
             Log.i("WDTT", "Converted to WG bean, updating profile")
-            profile.putBean(wgBean)
+            profile = profile.copy().putBean(wgBean)
             Log.i("WDTT", "Profile updated with WG bean")
         }
         buildConfig()

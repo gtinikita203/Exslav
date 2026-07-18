@@ -16,3 +16,4 @@ jniLibs/
 go.work
 go.work.sum
 
+/sub-proxy

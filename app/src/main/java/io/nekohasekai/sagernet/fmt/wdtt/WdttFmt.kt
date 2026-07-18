@@ -53,7 +53,14 @@ fun parseWdttObject(obj: JSONObject): WdttBean? {
 
 fun parseQwdttUri(raw: String): WdttBean? {
     return try {
-        val fullUri = raw.replace("qwdtt:config", "qwdtt://config")
+        val cleanRaw = if (raw.contains("#")) raw.substringBefore("#") else raw
+        val fragment = if (raw.contains("#")) {
+            Uri.decode(raw.substringAfter("#").trim())
+        } else {
+            ""
+        }
+
+        val fullUri = cleanRaw.replace("qwdtt:config", "qwdtt://config")
 
         // Format: wdtt://IP:DTLS_PORT:WG_PORT:LOCAL_PORT:PASSWORD:HASH1,HASH2,...
         if (fullUri.startsWith("wdtt://")) {
@@ -71,7 +78,7 @@ fun parseQwdttUri(raw: String): WdttBean? {
                 val hashes = if (parts.size > 4) parts[4] else ""
 
                 return WdttBean().apply {
-                    name = "WDTT $host"
+                    name = if (fragment.isNotEmpty()) fragment else "WDTT $host"
                     serverAddress = host
                     serverPort = dtlsPort
                     vkHashes = hashes
@@ -86,7 +93,7 @@ fun parseQwdttUri(raw: String): WdttBean? {
         val peer = uri.getQueryParameter("peer") ?: return null
         val (addr, port) = splitPeer(peer)
         WdttBean().apply {
-            name = uri.getQueryParameter("name") ?: "WDTT"
+            name = if (fragment.isNotEmpty()) fragment else (uri.getQueryParameter("name") ?: "WDTT")
             serverAddress = addr
             serverPort = port
             vkHashes = uri.getQueryParameter("hashes") ?: ""

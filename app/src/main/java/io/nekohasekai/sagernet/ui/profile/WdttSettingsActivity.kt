@@ -54,7 +54,7 @@ class WdttSettingsActivity : ProfileSettingsActivity<WdttBean>() {
         findPreference<EditTextPreference>(Key.VK_HASHES)!!.apply {
             setOnPreferenceChangeListener { _, _ ->
                 listView.post {
-                    workersPref.notifyChanged()
+                    workersPref.summaryProvider = workersPref.summaryProvider
                 }
                 true
             }

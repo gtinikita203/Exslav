@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SeekBarPreference
 import io.nekohasekai.sagernet.Key
 import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.database.DataStore
@@ -36,17 +37,16 @@ class WdttSettingsActivity : ProfileSettingsActivity<WdttBean>() {
     ) {
         addPreferencesFromResource(R.xml.wdtt_preferences)
 
-        val workersPref = findPreference<EditTextPreference>(Key.WDTT_WORKERS)!!
+        val workersPref = findPreference<SeekBarPreference>(Key.WDTT_WORKERS)!!
         workersPref.apply {
-            setOnBindEditTextListener(EditTextPreferenceModifiers.Number)
-            summaryProvider = Preference.SummaryProvider<EditTextPreference> { pref ->
+            summaryProvider = Preference.SummaryProvider<SeekBarPreference> { pref ->
                 val hashesText = DataStore.serverWdttHashes ?: ""
                 val uniqueHashes = hashesText.split(Regex("[,\\s\\n]+"))
                     .filter { it.isNotBlank() && it.length >= 16 }
                     .distinct()
                 val filledHashCount = uniqueHashes.size
                 val maxWorkers = filledHashCount.coerceAtLeast(1) * 27
-                val currentVal = pref.text?.toIntOrNull() ?: 24
+                val currentVal = pref.value
                 "Всего потоков: $currentVal. Для $filledHashCount хэш(ей) лимит: $maxWorkers потоков (27 на каждый хэш)."
             }
         }

@@ -1595,6 +1595,18 @@ class ConfigurationFragment @JvmOverloads constructor(
                 }
 
                 profileName.text = proxyEntity.displayName()
+                if (proxyEntity.type == ProxyEntity.TYPE_WDTT) {
+                    profileName.setOnClickListener {
+                        MaterialAlertDialogBuilder(view.context)
+                            .setTitle("О WDTT")
+                            .setMessage("Этот профиль работает через аудио/видеозвонки ВКонтакте (VK Calls), маскируя интернет-трафик под звонки для обхода блокировок и предоставления доступа в сеть.")
+                            .setPositiveButton(android.R.string.ok, null)
+                            .show()
+                    }
+                } else {
+                    profileName.setOnClickListener(null)
+                    profileName.isClickable = false
+                }
                 profileType.text = proxyEntity.displayType()
 
                 var rx = proxyEntity.rx

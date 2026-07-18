@@ -18,9 +18,12 @@
             app:title="@string/server_port"
             app:useSimpleSummaryProvider="true" />
         <EditTextPreference
-            app:key="wdttWorkers"
-            app:title="@string/wdtt_workers"
+            app:key="vkHashes"
+            app:title="Хэши звонков VK"
             app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            app:key="wdttWorkers"
+            app:title="@string/wdtt_workers" />
     </PreferenceCategory>
 
 </PreferenceScreen>

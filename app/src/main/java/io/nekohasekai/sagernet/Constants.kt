@@ -262,6 +262,7 @@ object Key {
     const val SERVER_SING_MUX_PADDING = "serverSingMuxPadding"
 
     const val WDTT_WORKERS = "wdttWorkers"
+    const val VK_HASHES = "vkHashes"
 
     const val EXPERIMENTAL_FLAGS = "experimentalFlags"
 

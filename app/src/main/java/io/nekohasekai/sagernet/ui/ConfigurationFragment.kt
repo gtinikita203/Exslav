@@ -820,6 +820,34 @@ class ConfigurationFragment @JvmOverloads constructor(
     }
 
     @Suppress("EXPERIMENTAL_API_USAGE")
+    private fun ProxyEntity.wdttKey(): String? {
+        if (this.type != ProxyEntity.TYPE_WDTT) return null
+        val b = this.wdttBean ?: return null
+        return "${b.serverAddress}:${b.serverPort}|${b.password}|${b.vkHashes}"
+    }
+
+    suspend fun runTestForProfile(profile: ProxyEntity, link: String, timeout: Int) {
+        try {
+            val instance = if (DataStore.tunImplementation == TunImplementation.SYSTEM && DataStore.serviceMode == Key.MODE_VPN && SagerNet.started && DataStore.startedProfile > 0) {
+                V2RayTestInstance(profile, link, timeout, protectPath = SagerNet.deviceStorage.noBackupFilesDir.toString() + "/protect_path")
+            } else {
+                V2RayTestInstance(profile, link, timeout)
+            }
+            val result = instance.use {
+                it.doTest()
+            }
+            profile.status = 1
+            profile.ping = result
+        } catch (e: PluginManager.PluginNotFoundException) {
+            profile.status = -1
+            profile.error = e.readableMessage
+        } catch (e: Exception) {
+            profile.status = 3
+            profile.error = e.readableMessage
+        }
+    }
+
+    @Suppress("EXPERIMENTAL_API_USAGE")
     fun urlTest() {
         val test = TestDialog()
         val dialog = test.builder.show()
@@ -841,6 +869,9 @@ class ConfigurationFragment @JvmOverloads constructor(
             val link = DataStore.connectionTestURL
             val timeout = 5000
 
+            val hashLocks = java.util.concurrent.ConcurrentHashMap<String, kotlinx.coroutines.sync.Mutex>()
+            val wdttTests = java.util.concurrent.ConcurrentHashMap<String, Deferred<ProxyEntity>>()
+
             repeat(6) {
                 testJobs.add(launch {
                     while (isActive) {
@@ -848,24 +879,38 @@ class ConfigurationFragment @JvmOverloads constructor(
                         profile.status = 0
                         test.insert(profile)
 
-                        try {
-                            val instance = if (DataStore.tunImplementation == TunImplementation.SYSTEM && DataStore.serviceMode == Key.MODE_VPN && SagerNet.started && DataStore.startedProfile > 0) {
-                                V2RayTestInstance(profile, link, timeout, protectPath = SagerNet.deviceStorage.noBackupFilesDir.toString() + "/protect_path")
-                            } else {
-                                V2RayTestInstance(profile, link, timeout)
+                        val key = profile.wdttKey()
+                        if (key != null) {
+                            val deferred = wdttTests.getOrPut(key) {
+                                async {
+                                    val uniqueHashes = profile.wdttBean?.vkHashes?.split(Regex("[,\\s\\n]+"))
+                                        ?.filter { it.isNotBlank() }?.distinct()?.sorted() ?: emptyList()
+                                    val acquiredLocks = mutableListOf<kotlinx.coroutines.sync.Mutex>()
+                                    for (hash in uniqueHashes) {
+                                        val lock = hashLocks.getOrPut(hash) { kotlinx.coroutines.sync.Mutex() }
+                                        lock.lock()
+                                        acquiredLocks.add(lock)
+                                    }
+                                    try {
+                                        runTestForProfile(profile, link, timeout)
+                                    } finally {
+                                        for (lock in acquiredLocks.reversed()) {
+                                            lock.unlock()
+                                        }
+                                    }
+                                    profile
+                                }
                             }
-                            val result = instance.use {
-                                it.doTest()
+                            val resultProfile = deferred.await()
+                            if (resultProfile.id != profile.id) {
+                                profile.status = resultProfile.status
+                                profile.ping = resultProfile.ping
+                                profile.error = resultProfile.error
                             }
-                            profile.status = 1
-                            profile.ping = result
-                        } catch (e: PluginManager.PluginNotFoundException) {
-                            profile.status = -1
-                            profile.error = e.readableMessage
-                        } catch (e: Exception) {
-                            profile.status = 3
-                            profile.error = e.readableMessage
+                        } else {
+                            runTestForProfile(profile, link, timeout)
                         }
+
                         onMainDispatcher {
                             finishedProfileCount++
                             test.binding.progressCircular.apply {

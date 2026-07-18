@@ -173,11 +173,13 @@ class SagerDatabase_Migration_35_36 : AutoMigrationSpec
 
 object SagerDatabase_Migration_37_38 : Migration(37, 38) {
     override fun migrate(database: SupportSQLiteDatabase) {
-        val hasWdttBean = database.query("PRAGMA table_info(`proxy_entities`)").use { cursor ->
+        val columns = database.query("PRAGMA table_info(`proxy_entities`)").use { cursor ->
             val nameColumn = cursor.getColumnIndexOrThrow("name")
-            generateSequence { if (cursor.moveToNext()) cursor.getString(nameColumn) else null }
-                .any { it == "wdttBean" }
+            buildSet {
+                while (cursor.moveToNext()) add(cursor.getString(nameColumn))
+            }
         }
-        if (!hasWdttBean) database.execSQL("ALTER TABLE `proxy_entities` ADD `wdttBean` BLOB DEFAULT NULL")
+        if ("wdttBean" !in columns) database.execSQL("ALTER TABLE `proxy_entities` ADD `wdttBean` BLOB DEFAULT NULL")
+        if ("snellBean" !in columns) database.execSQL("ALTER TABLE `proxy_entities` ADD `snellBean` BLOB DEFAULT NULL")
     }
 }

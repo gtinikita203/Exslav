@@ -61,6 +61,8 @@ import io.nekohasekai.sagernet.fmt.ssh.SSHBean
 import io.nekohasekai.sagernet.fmt.trojan.TrojanBean
 import io.nekohasekai.sagernet.fmt.trojan.toUri
 import io.nekohasekai.sagernet.fmt.trusttunnel.TrustTunnelBean
+import io.nekohasekai.sagernet.fmt.snell.SnellBean
+import io.nekohasekai.sagernet.ui.profile.SnellSettingsActivity
 import io.nekohasekai.sagernet.fmt.trusttunnel.toUri
 import io.nekohasekai.sagernet.fmt.tuic5.Tuic5Bean
 import io.nekohasekai.sagernet.fmt.tuic5.toUri
@@ -106,6 +108,7 @@ data class ProxyEntity(
     var shadowquicBean: ShadowQUICBean? = null,
     var trustTunnelBean: TrustTunnelBean? = null,
     var wdttBean: WdttBean? = null,
+    var snellBean: SnellBean? = null,
     var configBean: ConfigBean? = null,
     var chainBean: ChainBean? = null,
     var balancerBean: BalancerBean? = null
@@ -131,6 +134,7 @@ data class ProxyEntity(
         const val TYPE_SHADOWQUIC = 28
         const val TYPE_TRUSTTUNNEL = 29
         const val TYPE_WDTT = 30
+        const val TYPE_SNELL = 31
         const val TYPE_CHAIN = 8
         const val TYPE_BALANCER = 14
         const val TYPE_CONFIG = 13
@@ -224,6 +228,7 @@ data class ProxyEntity(
             TYPE_SHADOWQUIC -> shadowquicBean = KryoConverters.shadowquicDeserialize(byteArray)
             TYPE_TRUSTTUNNEL -> trustTunnelBean = KryoConverters.trusttunnelDeserialize(byteArray)
             TYPE_WDTT -> wdttBean = KryoConverters.wdttDeserialize(byteArray)
+            TYPE_SNELL -> snellBean = KryoConverters.snellDeserialize(byteArray)
 
             TYPE_CONFIG -> configBean = KryoConverters.configDeserialize(byteArray)
             TYPE_CHAIN -> chainBean = KryoConverters.chainDeserialize(byteArray)
@@ -251,6 +256,7 @@ data class ProxyEntity(
         TYPE_SHADOWQUIC -> "ShadowQUIC"
         TYPE_TRUSTTUNNEL -> "TrustTunnel"
         TYPE_WDTT -> "WDTT"
+        TYPE_SNELL -> snellBean!!.protocolName()
 
         TYPE_CHAIN -> chainName
         TYPE_CONFIG -> configName
@@ -282,6 +288,7 @@ data class ProxyEntity(
             TYPE_SHADOWQUIC -> shadowquicBean
             TYPE_TRUSTTUNNEL -> trustTunnelBean
             TYPE_WDTT -> wdttBean
+            TYPE_SNELL -> snellBean
 
             TYPE_CONFIG -> configBean
             TYPE_CHAIN -> chainBean
@@ -300,7 +307,7 @@ data class ProxyEntity(
 
     fun hasShareLink(): Boolean {
         return when (type) {
-            TYPE_SSH, TYPE_WG -> false
+            TYPE_SSH, TYPE_WG, TYPE_SNELL -> false
             TYPE_CONFIG, TYPE_CHAIN, TYPE_BALANCER -> false
             else -> true
         }
@@ -389,6 +396,7 @@ data class ProxyEntity(
         shadowquicBean = null
         trustTunnelBean = null
         wdttBean = null
+        snellBean = null
 
         configBean = null
         chainBean = null
@@ -471,6 +479,10 @@ data class ProxyEntity(
                 type = TYPE_WDTT
                 wdttBean = bean
             }
+            is SnellBean -> {
+                type = TYPE_SNELL
+                snellBean = bean
+            }
 
             is ConfigBean -> {
                 type = TYPE_CONFIG
@@ -510,6 +522,7 @@ data class ProxyEntity(
             TYPE_SHADOWQUIC -> ShadowQUICSettingsActivity::class.java
             TYPE_TRUSTTUNNEL -> TrustTunnelSettingsActivity::class.java
             TYPE_WDTT -> WdttSettingsActivity::class.java
+            TYPE_SNELL -> SnellSettingsActivity::class.java
 
             TYPE_CONFIG -> ConfigSettingsActivity::class.java
             TYPE_CHAIN -> ChainSettingsActivity::class.java

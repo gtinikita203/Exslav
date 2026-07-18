@@ -23,11 +23,13 @@ package io.nekohasekai.sagernet.group
 import com.github.shadowsocks.plugin.PluginOptions
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
+import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.fmt.AbstractBean
 import io.nekohasekai.sagernet.fmt.anytls.AnyTLSBean
 import io.nekohasekai.sagernet.fmt.http.HttpBean
 import io.nekohasekai.sagernet.fmt.hysteria2.Hysteria2Bean
 import io.nekohasekai.sagernet.fmt.mieru.MieruBean
+import io.nekohasekai.sagernet.fmt.shadowquic.ShadowQUICBean
 import io.nekohasekai.sagernet.fmt.shadowsocks.ShadowsocksBean
 import io.nekohasekai.sagernet.fmt.shadowsocks.supportedShadowsocksMethod
 import io.nekohasekai.sagernet.fmt.shadowsocksr.ShadowsocksRBean
@@ -38,6 +40,7 @@ import io.nekohasekai.sagernet.fmt.socks.SOCKSBean
 import io.nekohasekai.sagernet.fmt.ssh.SSHBean
 import io.nekohasekai.sagernet.fmt.trojan.TrojanBean
 import io.nekohasekai.sagernet.fmt.trusttunnel.TrustTunnelBean
+import io.nekohasekai.sagernet.fmt.snell.SnellBean
 import io.nekohasekai.sagernet.fmt.tuic5.Tuic5Bean
 import io.nekohasekai.sagernet.fmt.tuic5.supportedTuic5CongestionControl
 import io.nekohasekai.sagernet.fmt.tuic5.supportedTuic5RelayMode
@@ -73,7 +76,7 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
                     if (proxy.getBoolean("skip-cert-verify") == true) {
                         allowInsecure = true
                     }
-                    proxy.getString("fingerprint")?.replace(":", "")?.trim()?.also {
+                    proxy.getString("fingerprint")?.replace(":", "")?.trim()?.takeIf { it.isNotEmpty() }?.takeIf { it.isNotEmpty() }?.also {
                         pinnedPeerCertificateSha256 = it
                         allowInsecure = true
                     }
@@ -87,6 +90,7 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
                         mtlsCertificate = cert
                         mtlsCertificatePrivateKey = key
                     }
+                    serverNameToVerify = proxy.getString("name-cert-verify")
                 }
                 name = proxy.getString("name")
             })
@@ -104,7 +108,7 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
                     if (proxy.getBoolean("skip-cert-verify") == true) {
                         allowInsecure = true
                     }
-                    proxy.getString("fingerprint")?.replace(":", "")?.trim()?.also {
+                    proxy.getString("fingerprint")?.replace(":", "")?.trim()?.takeIf { it.isNotEmpty() }?.also {
                         pinnedPeerCertificateSha256 = it
                         allowInsecure = true
                     }
@@ -118,6 +122,7 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
                         mtlsCertificate = cert
                         mtlsCertificatePrivateKey = key
                     }
+                    serverNameToVerify = proxy.getString("name-cert-verify")
                 }
                 name = proxy.getString("name")
             })
@@ -247,7 +252,7 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
             if (bean.security == "tls") {
                 bean.alpn = proxy.getStringArray("alpn")?.joinToString("\n")
                 bean.allowInsecure = proxy.getBoolean("skip-cert-verify") == true
-                proxy.getString("fingerprint")?.replace(":", "")?.trim()?.also {
+                proxy.getString("fingerprint")?.replace(":", "")?.trim()?.takeIf { it.isNotEmpty() }?.also {
                     bean.pinnedPeerCertificateSha256 = it
                     bean.allowInsecure = true
                 }
@@ -261,12 +266,10 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
                     bean.mtlsCertificate = cert
                     bean.mtlsCertificatePrivateKey = key
                 }
-                if (bean is VLESSBean || bean is TrojanBean) {
-                    // Only parse ECH for shit VLESS or Trojan free nodes
-                    proxy.getObject("ech-opts")?.also {
-                        bean.echEnabled = it.getBoolean("enable")
-                        bean.echConfig = it.getString("config")
-                    }
+                bean.serverNameToVerify = proxy.getString("name-cert-verify")
+                proxy.getObject("ech-opts")?.also {
+                    bean.echEnabled = it.getBoolean("enable")
+                    bean.echConfig = it.getString("config")
                 }
             }
 
@@ -350,6 +353,10 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
                     }
                 }
             }
+
+            proxy.getObject("shadowtls-opts")?.also { return listOf() }
+            proxy.getObject("restls-opts")?.also { return listOf() }
+            proxy.getObject("jls-opts")?.also { return listOf() }
 
             proxy.getObject("reality-opts")?.also {
                 bean.security = "reality"
@@ -609,7 +616,7 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
                 auth = proxy.getString("password")
                 sni = proxy.getString("sni")
                 allowInsecure = proxy.getBoolean("skip-cert-verify") == true
-                proxy.getString("fingerprint")?.replace(":", "")?.trim()?.also {
+                proxy.getString("fingerprint")?.replace(":", "")?.trim()?.takeIf { it.isNotEmpty() }?.also {
                     pinnedPeerCertificateSha256 = it
                     allowInsecure = true
                 }
@@ -629,10 +636,11 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
                     mtlsCertificate = cert
                     mtlsCertificatePrivateKey = key
                 }
-                /*proxy.getObject("ech-opts")?.also {
+                serverNameToVerify = proxy.getString("name-cert-verify")
+                proxy.getObject("ech-opts")?.also {
                     echEnabled = it.getBoolean("enable")
                     echConfig = it.getString("config")
-                }*/
+                }
                 (proxy.getString("obfs"))?.also {
                     when (it) {
                         "" -> {}
@@ -703,7 +711,7 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
                         ?: (if (proxy.getString("ip") != null) proxy.getString("server") else null)
                     // https://github.com/MetaCubeX/mihomo/blob/d5243adf8911563677d3bd190b82623c93e554b7/adapter/outbound/tuic.go#L174-L178
                     alpn = if (!proxy.contains("alpn")) "h3" else proxy.getStringArray("alpn")?.joinToString("\n")
-                    proxy.getString("fingerprint")?.replace(":", "")?.trim()?.also {
+                    proxy.getString("fingerprint")?.replace(":", "")?.trim()?.takeIf { it.isNotEmpty() }?.also {
                         pinnedPeerCertificateSha256 = it
                         allowInsecure = true
                     }
@@ -723,6 +731,7 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
                         mtlsCertificate = cert
                         mtlsCertificatePrivateKey = key
                     }
+                    serverNameToVerify = proxy.getString("name-cert-verify")
                     /*proxy.getObject("ech-opts")?.also {
                         echEnabled = it.getBoolean("enable")
                         echConfig = it.getString("config")
@@ -765,10 +774,41 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
                         else -> MieruBean.HANDSHAKE_DEFAULT
                     }
                 }
-                /*proxy.getString("traffic-pattern")?.also {
+                proxy.getString("traffic-pattern")?.also {
                     // How to validate its validity?
                     trafficPattern = it
-                }*/
+                }
+                name = proxy.getString("name")
+            })
+        }
+        "snell" -> {
+            return listOf(SnellBean().apply {
+                serverAddress = proxy.getString("server") ?: return listOf()
+                serverPort = proxy.getInt("port")?.takeIf { it > 0 } ?: return listOf()
+                psk = proxy.getString("psk")
+                version = proxy.getInt("version")
+                if (version != 4) return listOf()
+                proxy.getObject("obfs-opts")?.also { opts ->
+                     when (opts.getString("mode")) {
+                        "tls" -> {
+                            obfsMode = SnellBean.OBFS_TLS
+                            obfsHost = when (val host = opts.getString("host")) {
+                                // null -> "bing.com"
+                                else ->  host
+                            }
+                        }
+                         "http" -> {
+                             obfsMode = SnellBean.OBFS_HTTP
+                             obfsHost = when (val host = opts.getString("host")) {
+                                 null -> "bing.com" // https://github.com/MetaCubeX/mihomo/blob/75eeba429292d915691f61d89fc5e57a612c8844/adapter/outbound/snell.go#L158
+                                 else ->  host
+                             }
+                         }
+                         null, "" -> SnellBean.OBFS_NONE
+                         else -> return listOf()
+                    }
+                }
+                reuse = proxy.getBoolean("reuse")
                 name = proxy.getString("name")
             })
         }
@@ -781,7 +821,7 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
                 sni = proxy.getString("sni")
                 alpn = proxy.getStringArray("alpn")?.joinToString("\n")
                 allowInsecure = proxy.getBoolean("skip-cert-verify") == true
-                proxy.getString("fingerprint")?.replace(":", "")?.trim()?.also {
+                proxy.getString("fingerprint")?.replace(":", "")?.trim()?.takeIf { it.isNotEmpty() }?.also {
                     pinnedPeerCertificateSha256 = it
                     allowInsecure = true
                 }
@@ -795,10 +835,14 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
                     mtlsCertificate = cert
                     mtlsCertificatePrivateKey = key
                 }
+                serverNameToVerify = proxy.getString("name-cert-verify")
                 /*proxy.getObject("ech-opts")?.also {
                     echEnabled = it.getBoolean("enable")
                     echConfig = it.getString("config")
                 }*/
+                proxy.getObject("shadowtls-opts")?.also { return listOf() }
+                proxy.getObject("restls-opts")?.also { return listOf() }
+                proxy.getObject("jls-opts")?.also { return listOf() }
                 name = proxy.getString("name")
             })
         }
@@ -811,7 +855,7 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
                 sni = proxy.getString("sni")
                 allowInsecure = proxy.getBoolean("skip-cert-verify") == true
                 protocol = if (proxy.getBoolean("quic") == true) "quic" else "https"
-                proxy.getString("fingerprint")?.replace(":", "")?.trim()?.also {
+                proxy.getString("fingerprint")?.replace(":", "")?.trim()?.takeIf { it.isNotEmpty() }?.also {
                     pinnedPeerCertificateSha256 = it
                     allowInsecure = true
                 }
@@ -825,6 +869,7 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
                     mtlsCertificate = cert
                     mtlsCertificatePrivateKey = key
                 }
+                serverNameToVerify = proxy.getString("name-cert-verify")
                 /*proxy.getObject("ech-opts")?.also {
                     echEnabled = it.getBoolean("enable")
                     echConfig = it.getString("config")
@@ -905,6 +950,22 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
                 }
             }
             return beanList
+        }
+        "shadowquic" -> {
+            if (!DataStore.experimentalFlagsProperties.getBooleanProperty("shadowquic")) {
+                return listOf()
+            }
+            return listOf(ShadowQUICBean().apply {
+                serverAddress = proxy.getString("server") ?: return listOf()
+                serverPort = proxy.getInt("port")?.takeIf { it > 0 } ?: return listOf()
+                username = proxy.getString("username")
+                password = proxy.getString("password")
+                sni = proxy.getString("sni")
+                alpn = proxy.getStringArray("alpn")?.joinToString("\n")
+                udpOverStream = proxy.getBoolean("udp-over-stream")
+                zeroRTT = proxy.getBoolean("zero-rtt")
+                name = proxy.getString("name")
+            })
         }
         else -> return listOf()
     }

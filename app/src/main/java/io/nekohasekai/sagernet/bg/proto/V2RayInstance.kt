@@ -413,42 +413,62 @@ abstract class V2RayInstance(
         val stderrLog = StringBuilder()
         var collecting = false
 
-        // Читаем stderr в фоновом корутине
-        GlobalScope.launch(Dispatchers.IO) {
+        val readyCompletable = kotlinx.coroutines.CompletableDeferred<Unit>()
+
+        // Читаем stderr (куда Go пишет логи log.Printf)
+        val stderrJob = GlobalScope.launch(Dispatchers.IO) {
             try {
                 var line: String?
                 while (stderrReader.readLine().also { line = it } != null) {
-                    Log.e("WDTT-Stderr", line!!)
-                    stderrLog.append(line).append("\n")
+                    val l = line!!
+                    Log.i("WDTT-GoStderr", l)
+                    stderrLog.append(l).append("\n")
+
+                    if (l.contains("[READY] Туннель готов к работе") || l.contains("Успешный старт!")) {
+                        Log.i("WDTT", "Detected READY signal in stderr!")
+                        readyCompletable.complete(Unit)
+                    }
                 }
             } catch (_: Exception) {}
         }
 
-        try {
-            var line: String?
-            while (stdoutReader.readLine().also { line = it } != null) {
-                val l = line!!
-                Log.i("WDTT-Go", l)
+        // Читаем stdout (куда печатается RAW Конфиг)
+        val stdoutJob = GlobalScope.launch(Dispatchers.IO) {
+            try {
+                var line: String?
+                while (stdoutReader.readLine().also { line = it } != null) {
+                    val l = line!!
+                    Log.i("WDTT-GoStdout", l)
 
-                if (l.contains("╔") && l.contains("RAW Конфиг")) {
-                    collecting = true
-                    configBuilder.clear()
-                } else if (collecting && l.contains("╚")) {
-                    Log.i("WDTT", "Found RAW config end marker")
-                    return@withContext configBuilder.toString().trim()
-                } else if (collecting && l.contains("║")) {
-                    val cleaned = l.replace("║", "").trim()
-                    configBuilder.appendLine(cleaned)
-                } else if (l.contains("[READY] Туннель готов к работе") || l.contains("Успешный старт!")) {
-                    Log.i("WDTT", "Go tunnel is READY, returning default RAW config")
-                    return@withContext "IP = 10.70.0.2\nMTU = 1350"
+                    if (l.contains("╔") && l.contains("RAW Конфиг")) {
+                        collecting = true
+                        configBuilder.clear()
+                    } else if (collecting && l.contains("╚")) {
+                        Log.i("WDTT", "Found RAW config end marker in stdout")
+                        readyCompletable.complete(Unit)
+                    } else if (collecting && l.contains("║")) {
+                        val cleaned = l.replace("║", "").trim()
+                        configBuilder.appendLine(cleaned)
+                    }
                 }
+            } catch (_: Exception) {}
+        }
+
+        // Ждем либо рамку из stdout, либо сигнал READY из stderr (с таймаутом 60с)
+        try {
+            withTimeout(60_000L) {
+                readyCompletable.await()
             }
         } catch (e: Exception) {
-            Log.e("WDTT", "Exception reading RAW config output", e)
-            error("wdtt: failed reading RAW stdout: ${e.message}\nstderr: $stderrLog")
+            Log.e("WDTT", "Timeout waiting for RAW config / READY signal", e)
+            error("wdtt: process failed to start tunnel\nstderr: $stderrLog")
         }
-        error("wdtt: process exited without RAW config\nstderr: $stderrLog")
+
+        val resultStr = configBuilder.toString().trim()
+        if (resultStr.isNotEmpty()) {
+            return@withContext resultStr
+        }
+        return@withContext "IP = 10.70.0.2\nMTU = 1350"
     }
 
     private suspend fun readWdttWgConfig(proc: Process): String = withContext(Dispatchers.IO) {

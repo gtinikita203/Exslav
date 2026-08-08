@@ -353,24 +353,49 @@ abstract class V2RayInstance(
             val ip = fields["IP"].orEmpty()
             val mtu = fields["MTU"]?.toIntOrNull() ?: 1350
 
+            // Логируем весь stdout/stderr бинарника libclient.so в фоновом режиме, чтобы видеть причины сбоев
+            GlobalScope.launch(Dispatchers.IO) {
+                try {
+                    val reader = proc.inputStream.bufferedReader()
+                    var line: String?
+                    while (reader.readLine().also { line = it } != null) {
+                        Log.i("WDTT-Go", line!!)
+                    }
+                } catch (e: Exception) {
+                    Log.d("WDTT-Go", "stdout reader closed: ${e.message}")
+                }
+            }
+            GlobalScope.launch(Dispatchers.IO) {
+                try {
+                    val errReader = proc.errorStream.bufferedReader()
+                    var line: String?
+                    while (errReader.readLine().also { line = it } != null) {
+                        Log.e("WDTT-GoStderr", line!!)
+                    }
+                } catch (e: Exception) {
+                    Log.d("WDTT-GoStderr", "stderr reader closed: ${e.message}")
+                }
+            }
+
             // Передаем TUN fd в go_client в фоновом корутине, когда VpnService поднимет conn
             GlobalScope.launch(Dispatchers.IO) {
                 try {
                     var attempts = 0
-                    while (io.nekohasekai.sagernet.bg.VpnService.instance?.conn == null && attempts < 100) {
+                    Log.i("WDTT", "Waiting for VpnService.instance?.conn to be initialized...")
+                    while (io.nekohasekai.sagernet.bg.VpnService.instance?.conn == null && attempts < 150) {
                         delay(100)
                         attempts++
                     }
                     val pfd = io.nekohasekai.sagernet.bg.VpnService.instance?.conn
                     if (pfd != null) {
-                        Log.i("WDTT", "Handing off TUN pfd to go_client via $rawSockName...")
+                        Log.i("WDTT", "Handing off TUN pfd (fd=${pfd.fd}) to go_client via $rawSockName...")
                         io.nekohasekai.sagernet.fmt.wdtt.TunFdBridge.sendOnce(rawSockName, pfd)
                         Log.i("WDTT", "TUN fd handed off successfully!")
                     } else {
-                        Log.e("WDTT", "VpnService.instance?.conn is null, failed to hand off TUN fd")
+                        Log.e("WDTT", "VpnService.instance?.conn is NULL after ${attempts * 100}ms, failed to hand off TUN fd")
                     }
                 } catch (e: Exception) {
-                    Log.e("WDTT", "Failed to hand off TUN fd", e)
+                    Log.e("WDTT", "Failed to hand off TUN fd: ${e.javaClass.simpleName}: ${e.message}", e)
                 }
             }
 
@@ -417,20 +442,16 @@ abstract class V2RayInstance(
             while (stdoutReader.readLine().also { line = it } != null) {
                 val l = line!!
                 Log.d("WDTT", "stdout: $l")
-                when {
-                    l.contains("╔") && l.contains("RAW Конфиг") -> {
-                        collecting = true
-                        configBuilder.clear()
-                    }
-                    collecting && l.contains("╚") -> {
-                        Log.i("WDTT", "Found RAW config end marker")
-                        val result = configBuilder.toString().trim()
-                        return@withContext result
-                    }
-                    collecting && l.contains("║") -> {
-                        val cleaned = l.replace("║", "").trim()
-                        configBuilder.appendLine(cleaned)
-                    }
+                if (l.contains("╔") && l.contains("RAW Конфиг")) {
+                    collecting = true
+                    configBuilder.clear()
+                } else if (collecting && l.contains("╚")) {
+                    Log.i("WDTT", "Found RAW config end marker")
+                    val result = configBuilder.toString().trim()
+                    return@withContext result
+                } else if (collecting && l.contains("║")) {
+                    val cleaned = l.replace("║", "").trim()
+                    configBuilder.appendLine(cleaned)
                 }
             }
             stderrReader.readLines().forEach { stderrLog.append(it).append("\n") }

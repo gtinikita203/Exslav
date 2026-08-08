@@ -270,7 +270,19 @@ class BaseService {
             if (io.nekohasekai.sagernet.bg.proto.WdttRawTunState.active) {
                 val raw = io.nekohasekai.sagernet.bg.proto.WdttRawTunState
                 if (raw.workers > 0) {
-                    return 1
+                    val start = System.currentTimeMillis()
+                    val url = java.net.URI(DataStore.connectionTestURL).toURL()
+                    val conn = url.openConnection() as java.net.HttpURLConnection
+                    conn.connectTimeout = 5000
+                    conn.readTimeout = 5000
+                    conn.instanceFollowRedirects = false
+                    try {
+                        conn.connect()
+                        conn.inputStream.close()
+                    } finally {
+                        conn.disconnect()
+                    }
+                    return (System.currentTimeMillis() - start).toInt().coerceAtLeast(1)
                 }
                 error("wdtt: tunnel not ready (workers=${raw.workers})")
             }

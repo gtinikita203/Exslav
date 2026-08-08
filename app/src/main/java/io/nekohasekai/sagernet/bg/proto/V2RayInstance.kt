@@ -59,6 +59,14 @@ abstract class V2RayInstance(
     private lateinit var shForwarder: WebView
     private var wdttProcess: Process? = null
 
+    /** Режим теста подключения WDTT: go_client запускается с -ping-only. */
+    @Volatile
+    var wdttPingOnly: Boolean = false
+
+    /** Результат ping-теста WDTT (мс), если был запущен с -ping-only. */
+    @Volatile
+    var wdttPingResult: Int? = null
+
     val pluginPath = hashMapOf<String, PluginManager.InitResult>()
     val pluginConfigs = hashMapOf<Int, Pair<Int, String>>()
     val externalInstances = hashMapOf<Int, AbstractInstance>()
@@ -355,6 +363,50 @@ abstract class V2RayInstance(
 
         if (bean.vkHashes.isNotBlank()) cmd.addAll(listOf("-vk", bean.vkHashes))
         if (bean.password.isNotBlank()) cmd.addAll(listOf("-password", bean.password))
+
+        if (isRaw && wdttPingOnly) {
+            // Тест подключения: go_client с -ping-only сам замеряет RTT до
+            // raw-сервера (RunPingRaw: TURN + WRAP + GETCONF_RAW) и печатает
+            // в stdout "PING_RESULT|<rtt>". TUN fd в этом режиме не нужен.
+            cmd.add("-ping-only")
+            val proc = ProcessBuilder(cmd).start()
+            wdttProcess = proc
+            Log.i("WDTT", "Starting subprocess [RAW PING]: ${cmd.joinToString(" ")}")
+            try {
+                val rtt = withTimeout(60_000L) {
+                    proc.inputStream.bufferedReader().useLines { lines ->
+                        var result: Int? = null
+                        for (line in lines) {
+                            Log.i("WDTT-GoPing", line)
+                            val m = Regex("PING_RESULT\\|(\\d+)").find(line)
+                            if (m != null) {
+                                result = m.groupValues[1].toIntOrNull()
+                                break
+                            }
+                        }
+                        result ?: error("wdtt: ping did not complete")
+                    }
+                }
+                wdttPingResult = rtt
+                Log.i("WDTT", "Raw ping result: $rtt ms")
+                proc.destroy()
+                wdttProcess = null
+                return WireGuardBean().apply {
+                    this.serverAddress = "127.0.0.1"
+                    this.serverPort = listenPort
+                    this.localAddress = "10.70.0.2/32"
+                    this.mtu = 1350
+                    this.name = bean.name?.ifBlank { "WDTT" } ?: "WDTT"
+                    this.privateKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+                    this.peerPublicKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+                }.applyDefaultValues()
+            } catch (e: Exception) {
+                proc.destroy()
+                wdttProcess = null
+                Log.e("WDTT", "Failed to ping raw server", e)
+                error("wdtt: ping failed: ${e.message}")
+            }
+        }
 
         val proc = ProcessBuilder(cmd).start()
         wdttProcess = proc

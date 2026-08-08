@@ -48,6 +48,16 @@ class V2RayTestInstance(profile: ProxyEntity, val link: String, val timeout: Int
             }
             runOnDefaultDispatcher {
                 try {
+                    // В raw-режиме go_client сам замеряет RTT (RunPingRaw), TUN fd не нужен.
+                    val bean = profile.wdttBean
+                    if (bean != null && (bean.mode == "rawtun" ||
+                            ((bean.mode == "vpn" || bean.mode == "auto") && bean.serverAddress.contains("2.26")))) {
+                        wdttPingOnly = true
+                        init()
+                        val rtt = wdttPingResult ?: error("wdtt: ping returned no result")
+                        c.tryResume(rtt)
+                        return@runOnDefaultDispatcher
+                    }
                     init()
                     launch()
                     if (pluginConfigs.isNotEmpty()) {

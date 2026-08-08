@@ -307,8 +307,16 @@ abstract class V2RayInstance(
         }
 
         val listenPort = DatagramSocket(0).use { it.localPort }
-        val peer = "${bean.serverAddress}:${bean.serverPort}"
         val isRaw = bean.mode == "rawtun"
+        // Raw-режим требует порт сервера -listen-raw (по умолчанию serverPort+3:
+        // 56000 -> 56003), а НЕ DTLS-порт serverPort — иначе сервер не понимает
+        // GETCONF_RAW и никогда не отвечает (см. server.go -listen-raw).
+        val peerPort = if (isRaw) {
+            (bean.rawPort ?: 0).takeIf { it > 0 } ?: (bean.serverPort + 3)
+        } else {
+            bean.serverPort
+        }
+        val peer = "${bean.serverAddress}:$peerPort"
 
         val cmd = mutableListOf(
             exe.absolutePath,
@@ -345,35 +353,23 @@ abstract class V2RayInstance(
                 error("wdtt: failed to get RAW config: ${e.message}")
             }
 
-            Log.i("WDTT", "Got RAW config:\n$rawConfig")
+Log.i("WDTT", "Got RAW config:\n$rawConfig")
             val fields = rawConfig.lines().associate { l ->
                 val parts = l.split("=", limit = 2).map { it.trim() }
                 (parts.getOrElse(0) { "" }) to (parts.getOrElse(1) { "" })
             }
             val ip = fields["IP"].orEmpty()
             val mtu = fields["MTU"]?.toIntOrNull() ?: 1350
+            val dns = fields["DNS"].orEmpty().ifBlank { "1.1.1.1,1.0.0.1" }
 
-            // Передаем TUN fd в go_client в фоновом корутине, когда VpnService поднимет conn
-            GlobalScope.launch(Dispatchers.IO) {
-                try {
-                    var attempts = 0
-                    Log.i("WDTT", "Waiting for VpnService.instance?.conn to be initialized...")
-                    while (io.nekohasekai.sagernet.bg.VpnService.instance?.conn == null && attempts < 150) {
-                        delay(100)
-                        attempts++
-                    }
-                    val pfd = io.nekohasekai.sagernet.bg.VpnService.instance?.conn
-                    if (pfd != null) {
-                        Log.i("WDTT", "Handing off TUN pfd (fd=${pfd.fd}) to go_client via $rawSockName...")
-                        io.nekohasekai.sagernet.fmt.wdtt.TunFdBridge.sendOnce(rawSockName, pfd)
-                        Log.i("WDTT", "TUN fd handed off successfully!")
-                    } else {
-                        Log.e("WDTT", "VpnService.instance?.conn is NULL after ${attempts * 100}ms, failed to hand off TUN fd")
-                    }
-                } catch (e: Exception) {
-                    Log.e("WDTT", "Failed to hand off TUN fd: ${e.javaClass.simpleName}: ${e.message}", e)
-                }
-            }
+            // Параметры raw-туннеля передаются VpnService.startVpn(), который сам
+            // поднимет TUN с server-адресом/MTU/DNS и сразу передаст fd в go_client
+            // (сейчас — через TunFdBridge.sendOnce, а не через фоновую гонку на conn).
+            // TUN fd передаётся ТОЛЬКО один раз, когда VpnService.build() его создал.
+            // Здесь больше НЕ ждём VpnService.instance.conn — это была гонка:
+            // v2ray-core (fake WG) закрывал conn раньше, чем мы успевали забрать fd.
+            WdttRawTunState.set(ip.ifBlank { "10.70.0.2" }, mtu, dns, rawSockName)
+            Log.i("WDTT", "Registered raw TUN state: ip=${WdttRawTunState.ip} mtu=${WdttRawTunState.mtu} dns=${WdttRawTunState.dns} sock=$rawSockName")
 
             // Возвращаем фейковый WG bean для удовлетворения контракта Exslav
             return WireGuardBean().apply {
@@ -415,6 +411,7 @@ abstract class V2RayInstance(
         var collecting = false
 
         val readyCompletable = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val rawBoxCompleted = kotlinx.coroutines.CompletableDeferred<Unit>()
 
         // Читаем stderr (куда Go пишет логи log.Printf)
         val stderrJob = GlobalScope.launch(Dispatchers.IO) {
@@ -427,7 +424,7 @@ abstract class V2RayInstance(
 
                     if (l.contains("[READY] Туннель готов к работе") || l.contains("Успешный старт!")) {
                         Log.i("WDTT", "Detected READY signal in stderr!")
-                        readyCompletable.complete(Unit)
+                        readyCompletable.tryComplete(Unit)
                     }
                 }
             } catch (_: Exception) {}
@@ -446,7 +443,8 @@ abstract class V2RayInstance(
                         configBuilder.clear()
                     } else if (collecting && l.contains("╚")) {
                         Log.i("WDTT", "Found RAW config end marker in stdout")
-                        readyCompletable.complete(Unit)
+                        readyCompletable.tryComplete(Unit)
+                        rawBoxCompleted.tryComplete(Unit)
                     } else if (collecting && l.contains("║")) {
                         val cleaned = l.replace("║", "").trim()
                         configBuilder.appendLine(cleaned)
@@ -455,11 +453,15 @@ abstract class V2RayInstance(
             } catch (_: Exception) {}
         }
 
-        // Ждем либо рамку из stdout, либо сигнал READY из stderr (с таймаутом 60с)
+        // Ждем именно рамку с RAW-конфигом из stdout (rawBoxCompleted),
+        // а не первый [READY] из stderr, который печатается раньше окончания парсинга.
+        // Если рамка так и не пришла, но туннель READY — используем фолбэк ниже.
         try {
             withTimeout(60_000L) {
-                readyCompletable.await()
+                rawBoxCompleted.await()
             }
+        } catch (e: TimeoutCancellationException) {
+            Log.w("WDTT", "RAW config box not received within 60s (only READY seen), using fallback")
         } catch (e: Exception) {
             Log.e("WDTT", "Timeout waiting for RAW config / READY signal", e)
             error("wdtt: process failed to start tunnel\nstderr: $stderrLog")

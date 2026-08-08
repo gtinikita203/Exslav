@@ -14,6 +14,7 @@ public class WdttBean extends AbstractBean {
     public String password;
     public Integer workers;
     public String mode; // "vpn" (WireGuard) or "rawtun"
+    public Integer rawPort; // порт -listen-raw на сервере (0 = serverPort+3)
 
     @Override
     public void initializeDefaultValues() {
@@ -22,16 +23,18 @@ public class WdttBean extends AbstractBean {
         if (password == null) password = "";
         if (workers == null) workers = 27;
         if (mode == null) mode = "vpn";
+        if (rawPort == null) rawPort = 0;
     }
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(2);
+        output.writeInt(3);
         super.serialize(output);
         output.writeString(vkHashes);
         output.writeString(password);
         output.writeInt(workers);
         output.writeString(mode);
+        output.writeInt(rawPort);
     }
 
     @Override
@@ -46,6 +49,7 @@ public class WdttBean extends AbstractBean {
         } else {
             mode = "vpn";
         }
+        rawPort = version >= 3 ? input.readInt() : 0;
     }
 
     @NonNull

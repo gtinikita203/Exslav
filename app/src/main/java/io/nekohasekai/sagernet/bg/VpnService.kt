@@ -179,6 +179,44 @@ class VpnService : BaseVpnService(),
     private fun startVpn() {
         instance = this
 
+        if (io.nekohasekai.sagernet.bg.proto.WdttRawTunState.active) {
+            // Raw-режим WDTT: поднимаем TUN с адресом/MTU/DNS от сервера
+            // (RAWCONF) и сразу передаём fd в go_client. Промежуточный Tun2ray
+            // не создаётся: go_client сам читает сырые IP-пакеты из TUN.
+            val raw = io.nekohasekai.sagernet.bg.proto.WdttRawTunState
+            Log.i("WDTT", "startVpn [RAW]: building TUN ip=${raw.ip}/32 mtu=${raw.mtu} dns=${raw.dns}")
+            val builder = Builder().setConfigureIntent(SagerNet.configureIntent(this))
+                .setSession(getString(R.string.app_name))
+                .setMtu(raw.mtu)
+            builder.addAddress(raw.ip.substringBefore('/'), 32)
+            builder.addRoute("0.0.0.0", 0)
+            if (DataStore.enableVPNInterfaceIPv6Address) {
+                builder.addRoute("::", 0)
+            }
+            raw.dns.split(',').map { it.trim() }.filter { it.isNotEmpty() }.forEach {
+                builder.addDnsServer(it)
+            }
+            builder.addDisallowedApplication(packageName)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                builder.setUnderlyingNetworks(underlyingNetworks)
+            }
+            if (DataStore.allowAppsBypassVpn) {
+                builder.allowBypass()
+            }
+            conn = builder.establish() ?: throw NullConnectionException()
+            active = true
+            GlobalScope.launch(Dispatchers.IO) {
+                try {
+                    Log.i("WDTT", "Raw TUN established fd=${conn.fd}, handoff to go_client via ${raw.sockName}...")
+                    io.nekohasekai.sagernet.fmt.wdtt.TunFdBridge.sendOnce(raw.sockName, conn)
+                    Log.i("WDTT", "Raw TUN fd handed off to go_client successfully")
+                } catch (e: Exception) {
+                    Log.e("WDTT", "Raw TUN fd handoff failed: ${e.javaClass.simpleName}: ${e.message}", e)
+                }
+            }
+            return
+        }
+
         val builder = Builder().setConfigureIntent(SagerNet.configureIntent(this))
             .setSession(getString(R.string.app_name))
             .setMtu(DataStore.mtu)

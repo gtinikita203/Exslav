@@ -353,30 +353,6 @@ abstract class V2RayInstance(
             val ip = fields["IP"].orEmpty()
             val mtu = fields["MTU"]?.toIntOrNull() ?: 1350
 
-            // Логируем весь stdout/stderr бинарника libclient.so в фоновом режиме, чтобы видеть причины сбоев
-            GlobalScope.launch(Dispatchers.IO) {
-                try {
-                    val reader = proc.inputStream.bufferedReader()
-                    var line: String?
-                    while (reader.readLine().also { line = it } != null) {
-                        Log.i("WDTT-Go", line!!)
-                    }
-                } catch (e: Exception) {
-                    Log.d("WDTT-Go", "stdout reader closed: ${e.message}")
-                }
-            }
-            GlobalScope.launch(Dispatchers.IO) {
-                try {
-                    val errReader = proc.errorStream.bufferedReader()
-                    var line: String?
-                    while (errReader.readLine().also { line = it } != null) {
-                        Log.e("WDTT-GoStderr", line!!)
-                    }
-                } catch (e: Exception) {
-                    Log.d("WDTT-GoStderr", "stderr reader closed: ${e.message}")
-                }
-            }
-
             // Передаем TUN fd в go_client в фоновом корутине, когда VpnService поднимет conn
             GlobalScope.launch(Dispatchers.IO) {
                 try {
@@ -436,28 +412,37 @@ abstract class V2RayInstance(
         val configBuilder = StringBuilder()
         val stderrLog = StringBuilder()
         var collecting = false
-        var line: String?
+
+        // Читаем stderr в фоновом корутине
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
+                var line: String?
+                while (stderrReader.readLine().also { line = it } != null) {
+                    Log.e("WDTT-Stderr", line!!)
+                    stderrLog.append(line).append("\n")
+                }
+            } catch (_: Exception) {}
+        }
 
         try {
+            var line: String?
             while (stdoutReader.readLine().also { line = it } != null) {
                 val l = line!!
-                Log.d("WDTT", "stdout: $l")
+                Log.i("WDTT-Go", l) // ВЫВОДИМ КАЖДУЮ СТРОКУ GO В REAL-TIMEВ LOGCAT
+
                 if (l.contains("╔") && l.contains("RAW Конфиг")) {
                     collecting = true
                     configBuilder.clear()
                 } else if (collecting && l.contains("╚")) {
                     Log.i("WDTT", "Found RAW config end marker")
-                    val result = configBuilder.toString().trim()
-                    return@withContext result
+                    return@withContext configBuilder.toString().trim()
                 } else if (collecting && l.contains("║")) {
                     val cleaned = l.replace("║", "").trim()
                     configBuilder.appendLine(cleaned)
                 }
             }
-            stderrReader.readLines().forEach { stderrLog.append(it).append("\n") }
         } catch (e: Exception) {
             Log.e("WDTT", "Exception reading RAW config output", e)
-            stderrReader.readLines().forEach { stderrLog.append(it).append("\n") }
             error("wdtt: failed reading RAW stdout: ${e.message}\nstderr: $stderrLog")
         }
         error("wdtt: process exited without RAW config\nstderr: $stderrLog")

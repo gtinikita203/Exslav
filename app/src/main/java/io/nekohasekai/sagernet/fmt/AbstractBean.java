@@ -48,7 +48,7 @@ public abstract class AbstractBean extends Serializable {
     public String profileId;
 
     public String displayName() {
-        if (!name.isEmpty()) {
+        if (name != null && !name.isEmpty()) {
             return name;
         } else {
             return displayAddress();

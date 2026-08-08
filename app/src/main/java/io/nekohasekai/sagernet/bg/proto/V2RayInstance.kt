@@ -381,9 +381,10 @@ abstract class V2RayInstance(
                 this.serverPort = listenPort
                 this.localAddress = if (ip.isNotBlank()) ip else "10.70.0.2/32"
                 this.mtu = mtu
+                this.name = bean.name?.ifBlank { "WDTT" } ?: "WDTT"
                 this.privateKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
                 this.peerPublicKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-            }
+            }.applyDefaultValues()
         }
 
         val wgConfig = try {

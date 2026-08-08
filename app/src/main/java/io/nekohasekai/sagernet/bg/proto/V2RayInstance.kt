@@ -308,6 +308,7 @@ abstract class V2RayInstance(
 
         val listenPort = DatagramSocket(0).use { it.localPort }
         val peer = "${bean.serverAddress}:${bean.serverPort}"
+        val isRaw = bean.mode == "rawtun"
 
         val cmd = mutableListOf(
             exe.absolutePath,
@@ -318,11 +319,71 @@ abstract class V2RayInstance(
             "-vk-auth", "anonymous",
             "-captcha-mode", "auto",
         )
+
+        var rawSockName = ""
+        if (isRaw) {
+            rawSockName = io.nekohasekai.sagernet.fmt.wdtt.TunFdBridge.newSocketName()
+            cmd.addAll(listOf("-mode", "rawtun", "-tun-fd-sock", io.nekohasekai.sagernet.fmt.wdtt.TunFdBridge.goSockPath(rawSockName)))
+        }
+
         if (bean.vkHashes.isNotBlank()) cmd.addAll(listOf("-vk", bean.vkHashes))
         if (bean.password.isNotBlank()) cmd.addAll(listOf("-password", bean.password))
 
         val proc = ProcessBuilder(cmd).start()
         wdttProcess = proc
+
+        if (isRaw) {
+            val rawConfig = try {
+                Log.i("WDTT", "Starting subprocess [RAW]: ${cmd.joinToString(" ")}")
+                withTimeout(120_000L) {
+                    readWdttRawConfig(proc)
+                }
+            } catch (e: Exception) {
+                proc.destroy()
+                wdttProcess = null
+                Log.e("WDTT", "Failed to get RAW config", e)
+                error("wdtt: failed to get RAW config: ${e.message}")
+            }
+
+            Log.i("WDTT", "Got RAW config:\n$rawConfig")
+            val fields = rawConfig.lines().associate { l ->
+                val parts = l.split("=", limit = 2).map { it.trim() }
+                (parts.getOrElse(0) { "" }) to (parts.getOrElse(1) { "" })
+            }
+            val ip = fields["IP"].orEmpty()
+            val mtu = fields["MTU"]?.toIntOrNull() ?: 1350
+
+            // Передаем TUN fd в go_client в фоновом корутине, когда VpnService поднимет conn
+            GlobalScope.launch(Dispatchers.IO) {
+                try {
+                    var attempts = 0
+                    while (io.nekohasekai.sagernet.bg.VpnService.instance?.conn == null && attempts < 100) {
+                        delay(100)
+                        attempts++
+                    }
+                    val pfd = io.nekohasekai.sagernet.bg.VpnService.instance?.conn
+                    if (pfd != null) {
+                        Log.i("WDTT", "Handing off TUN pfd to go_client via $rawSockName...")
+                        io.nekohasekai.sagernet.fmt.wdtt.TunFdBridge.sendOnce(rawSockName, pfd)
+                        Log.i("WDTT", "TUN fd handed off successfully!")
+                    } else {
+                        Log.e("WDTT", "VpnService.instance?.conn is null, failed to hand off TUN fd")
+                    }
+                } catch (e: Exception) {
+                    Log.e("WDTT", "Failed to hand off TUN fd", e)
+                }
+            }
+
+            // Возвращаем фейковый WG bean для удовлетворения контракта Exslav
+            return WireGuardBean().apply {
+                this.serverAddress = "127.0.0.1"
+                this.serverPort = listenPort
+                this.localAddress = if (ip.isNotBlank()) ip else "10.70.0.2/32"
+                this.mtu = mtu
+                this.privateKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+                this.peerPublicKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+            }
+        }
 
         val wgConfig = try {
             Log.i("WDTT", "Starting subprocess: ${cmd.joinToString(" ")}")
@@ -342,6 +403,43 @@ abstract class V2RayInstance(
         Log.i("WDTT", "Parsed ${parsed.size} WG beans")
         return parsed.firstOrNull()?.applyDefaultValues()
             ?: error("wdtt: could not parse WireGuard config")
+    }
+
+    private suspend fun readWdttRawConfig(proc: Process): String = withContext(Dispatchers.IO) {
+        val stdoutReader = proc.inputStream.bufferedReader()
+        val stderrReader = proc.errorStream.bufferedReader()
+        val configBuilder = StringBuilder()
+        val stderrLog = StringBuilder()
+        var collecting = false
+        var line: String?
+
+        try {
+            while (stdoutReader.readLine().also { line = it } != null) {
+                val l = line!!
+                Log.d("WDTT", "stdout: $l")
+                when {
+                    l.contains("╔") && l.contains("RAW Конфиг") -> {
+                        collecting = true
+                        configBuilder.clear()
+                    }
+                    collecting && l.contains("╚") -> {
+                        Log.i("WDTT", "Found RAW config end marker")
+                        val result = configBuilder.toString().trim()
+                        return@withContext result
+                    }
+                    collecting && l.contains("║") -> {
+                        val cleaned = l.replace("║", "").trim()
+                        configBuilder.appendLine(cleaned)
+                    }
+                }
+            }
+            stderrReader.readLines().forEach { stderrLog.append(it).append("\n") }
+        } catch (e: Exception) {
+            Log.e("WDTT", "Exception reading RAW config output", e)
+            stderrReader.readLines().forEach { stderrLog.append(it).append("\n") }
+            error("wdtt: failed reading RAW stdout: ${e.message}\nstderr: $stderrLog")
+        }
+        error("wdtt: process exited without RAW config\nstderr: $stderrLog")
     }
 
     private suspend fun readWdttWgConfig(proc: Process): String = withContext(Dispatchers.IO) {

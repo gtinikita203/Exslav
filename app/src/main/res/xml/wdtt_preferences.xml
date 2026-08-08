@@ -22,6 +22,13 @@
             app:key="vkHashes"
             app:title="Хэши звонков VK"
             app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            app:key="wdttMode"
+            app:title="Режим подключения"
+            app:entries="@array/wdtt_mode_entries"
+            app:entryValues="@array/wdtt_mode_values"
+            app:defaultValue="vpn"
+            app:useSimpleSummaryProvider="true" />
         <SeekBarPreference
             app:key="wdttWorkers"
             app:title="@string/wdtt_workers"

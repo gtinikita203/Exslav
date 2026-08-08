@@ -20,6 +20,7 @@ class WdttSettingsActivity : ProfileSettingsActivity<WdttBean>() {
         DataStore.serverAddress = serverAddress
         DataStore.serverPort = serverPort
         DataStore.serverWdttWorkers = workers
+        DataStore.serverWdttMode = mode ?: "vpn"
         DataStore.serverWdttHashes = vkHashes
     }
 
@@ -28,6 +29,7 @@ class WdttSettingsActivity : ProfileSettingsActivity<WdttBean>() {
         serverAddress = DataStore.serverAddress
         serverPort = DataStore.serverPort
         workers = (DataStore.serverWdttWorkers ?: 36).coerceAtMost(108)
+        mode = DataStore.serverWdttMode ?: "vpn"
         vkHashes = DataStore.serverWdttHashes ?: ""
     }
 

@@ -13,6 +13,7 @@ public class WdttBean extends AbstractBean {
     public String vkHashes;
     public String password;
     public Integer workers;
+    public String mode; // "vpn" (WireGuard) or "rawtun"
 
     @Override
     public void initializeDefaultValues() {
@@ -20,15 +21,17 @@ public class WdttBean extends AbstractBean {
         if (vkHashes == null) vkHashes = "";
         if (password == null) password = "";
         if (workers == null) workers = 27;
+        if (mode == null) mode = "vpn";
     }
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(1);
+        output.writeInt(2);
         super.serialize(output);
         output.writeString(vkHashes);
         output.writeString(password);
         output.writeInt(workers);
+        output.writeString(mode);
     }
 
     @Override
@@ -38,6 +41,11 @@ public class WdttBean extends AbstractBean {
         vkHashes = input.readString();
         password = input.readString();
         workers = input.readInt();
+        if (version >= 2) {
+            mode = input.readString();
+        } else {
+            mode = "vpn";
+        }
     }
 
     @NonNull

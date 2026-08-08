@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="wdtt_mode_entries">
+        <item>VPN (WireGuard)</item>
+        <item>RAW (Direct raw-IP)</item>
+    </string-array>
+    <string-array name="wdtt_mode_values">
+        <item>vpn</item>
+        <item>rawtun</item>
+    </string-array>
+
     <string-array name="bypass_private_route">
         <!-->
             This is the complement of

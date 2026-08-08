@@ -272,6 +272,7 @@ object Key {
     const val SERVER_SING_MUX_PADDING = "serverSingMuxPadding"
 
     const val WDTT_WORKERS = "wdttWorkers"
+    const val WDTT_MODE = "wdttMode"
     const val VK_HASHES = "vkHashes"
 
     const val SERVER_SING_SNELL_CATEGORY = "serverSingSnellCategory"

@@ -184,7 +184,7 @@ class VpnService : BaseVpnService(),
             // (RAWCONF) и сразу передаём fd в go_client. Промежуточный Tun2ray
             // не создаётся: go_client сам читает сырые IP-пакеты из TUN.
             val raw = io.nekohasekai.sagernet.bg.proto.WdttRawTunState
-            Logs.i("WDTT", "startVpn [RAW]: building TUN ip=${raw.ip}/32 mtu=${raw.mtu} dns=${raw.dns}")
+            Logs.i("WDTT: startVpn [RAW] building TUN ip=${raw.ip}/32 mtu=${raw.mtu} dns=${raw.dns}")
             val builder = Builder().setConfigureIntent(SagerNet.configureIntent(this))
                 .setSession(getString(R.string.app_name))
                 .setMtu(raw.mtu)
@@ -207,11 +207,11 @@ class VpnService : BaseVpnService(),
             active = true
             GlobalScope.launch(Dispatchers.IO) {
                 try {
-                    Logs.i("WDTT", "Raw TUN established fd=${conn.fd}, handoff to go_client via ${raw.sockName}...")
+                    Logs.i("WDTT: Raw TUN established fd=${conn.fd}, handoff to go_client via ${raw.sockName}...")
                     io.nekohasekai.sagernet.fmt.wdtt.TunFdBridge.sendOnce(raw.sockName, conn)
-                    Logs.i("WDTT", "Raw TUN fd handed off to go_client successfully")
+                    Logs.i("WDTT: Raw TUN fd handed off to go_client successfully")
                 } catch (e: Exception) {
-                    Logs.e("WDTT", "Raw TUN fd handoff failed: ${e.javaClass.simpleName}: ${e.message}", e)
+                    Logs.e("WDTT: Raw TUN fd handoff failed: ${e.javaClass.simpleName}: ${e.message}", e)
                 }
             }
             return

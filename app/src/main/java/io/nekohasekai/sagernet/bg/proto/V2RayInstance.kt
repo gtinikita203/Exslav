@@ -424,7 +424,7 @@ Log.i("WDTT", "Got RAW config:\n$rawConfig")
 
                     if (l.contains("[READY] Туннель готов к работе") || l.contains("Успешный старт!")) {
                         Log.i("WDTT", "Detected READY signal in stderr!")
-                        readyCompletable.tryComplete(Unit)
+                        readyCompletable.complete(Unit)
                     }
                 }
             } catch (_: Exception) {}
@@ -443,8 +443,8 @@ Log.i("WDTT", "Got RAW config:\n$rawConfig")
                         configBuilder.clear()
                     } else if (collecting && l.contains("╚")) {
                         Log.i("WDTT", "Found RAW config end marker in stdout")
-                        readyCompletable.tryComplete(Unit)
-                        rawBoxCompleted.tryComplete(Unit)
+                        readyCompletable.complete(Unit)
+                        rawBoxCompleted.complete(Unit)
                     } else if (collecting && l.contains("║")) {
                         val cleaned = l.replace("║", "").trim()
                         configBuilder.appendLine(cleaned)

@@ -322,7 +322,11 @@ abstract class V2RayInstance(
         }
 
         val listenPort = DatagramSocket(0).use { it.localPort }
-        val isRaw = bean.mode == "rawtun"
+        val autoRaw = (bean.mode == "vpn" || bean.mode == "auto") && bean.serverAddress.contains("2.26")
+        val isRaw = bean.mode == "rawtun" || autoRaw
+        if (autoRaw) {
+            Log.i("WDTT", "Auto-switch WG->raw for server ${bean.serverAddress}")
+        }
         // Raw-режим требует порт сервера -listen-raw (по умолчанию serverPort+3:
         // 56000 -> 56003), а НЕ DTLS-порт serverPort — иначе сервер не понимает
         // GETCONF_RAW и никогда не отвечает (см. server.go -listen-raw).

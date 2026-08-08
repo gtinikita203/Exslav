@@ -27,7 +27,7 @@
             app:title="Режим подключения"
             app:entries="@array/wdtt_mode_entries"
             app:entryValues="@array/wdtt_mode_values"
-            app:defaultValue="vpn"
+            app:defaultValue="auto"
             app:useSimpleSummaryProvider="true" />
         <SeekBarPreference
             app:key="wdttWorkers"

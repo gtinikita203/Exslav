@@ -2,10 +2,12 @@
 <resources>
     <string-array name="wdtt_mode_entries">
         <item>VPN (WireGuard)</item>
+        <item>Auto (по IP)</item>
         <item>RAW (Direct raw-IP)</item>
     </string-array>
     <string-array name="wdtt_mode_values">
         <item>vpn</item>
+        <item>auto</item>
         <item>rawtun</item>
     </string-array>
 

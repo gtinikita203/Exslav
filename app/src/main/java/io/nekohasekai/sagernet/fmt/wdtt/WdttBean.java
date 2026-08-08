@@ -22,7 +22,7 @@ public class WdttBean extends AbstractBean {
         if (vkHashes == null) vkHashes = "";
         if (password == null) password = "";
         if (workers == null) workers = 27;
-        if (mode == null) mode = "vpn";
+        if (mode == null) mode = "auto";
         if (rawPort == null) rawPort = 0;
     }
 
@@ -47,9 +47,14 @@ public class WdttBean extends AbstractBean {
         if (version >= 2) {
             mode = input.readString();
         } else {
-            mode = "vpn";
+            mode = "auto";
         }
         rawPort = version >= 3 ? input.readInt() : 0;
+        // Миграция: старые профили с "vpn" переводим на "auto", чтобы автопереход
+        // WG->raw (по IP с 2.26) работал у всех, включая добавленных до обновления.
+        if ("vpn".equals(mode)) {
+            mode = "auto";
+        }
     }
 
     @NonNull

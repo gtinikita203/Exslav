@@ -72,5 +72,10 @@ object WdttRawTunState {
         if (downMatch != null) {
             rxBytes = (downMatch.groupValues[1].toDoubleOrNull() ?: 0.0).let { (it * 1024 * 1024).toLong() }
         }
+        // Фолбэк на старый формат go_client: "Трафик: X.XX МБ" (без разделения Up/Down).
+        val trafficMatch = Regex("Трафик:\\s*([\\d.]+)\\s*МБ").find(line)
+        if (trafficMatch != null && upMatch == null && downMatch == null) {
+            rxBytes = (trafficMatch.groupValues[1].toDoubleOrNull() ?: 0.0).let { (it * 1024 * 1024).toLong() }
+        }
     }
 }

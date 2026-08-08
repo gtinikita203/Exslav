@@ -428,7 +428,7 @@ abstract class V2RayInstance(
             var line: String?
             while (stdoutReader.readLine().also { line = it } != null) {
                 val l = line!!
-                Log.i("WDTT-Go", l) // ВЫВОДИМ КАЖДУЮ СТРОКУ GO В REAL-TIMEВ LOGCAT
+                Log.i("WDTT-Go", l)
 
                 if (l.contains("╔") && l.contains("RAW Конфиг")) {
                     collecting = true
@@ -439,6 +439,9 @@ abstract class V2RayInstance(
                 } else if (collecting && l.contains("║")) {
                     val cleaned = l.replace("║", "").trim()
                     configBuilder.appendLine(cleaned)
+                } else if (l.contains("[READY] Туннель готов к работе") || l.contains("Успешный старт!")) {
+                    Log.i("WDTT", "Go tunnel is READY, returning default RAW config")
+                    return@withContext "IP = 10.70.0.2\nMTU = 1350"
                 }
             }
         } catch (e: Exception) {

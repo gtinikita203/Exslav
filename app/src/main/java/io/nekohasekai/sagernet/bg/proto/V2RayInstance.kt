@@ -437,6 +437,10 @@ Log.i("WDTT", "Got RAW config:\n$rawConfig")
                     Log.i("WDTT-GoStderr", l)
                     stderrLog.append(l).append("\n")
 
+                    if (l.contains("[СТАТИСТИКА]")) {
+                        WdttRawTunState.updateFromStats(l)
+                    }
+
                     if (l.contains("[READY] Туннель готов к работе") || l.contains("Успешный старт!")) {
                         Log.i("WDTT", "Detected READY signal in stderr!")
                         readyCompletable.complete(Unit)

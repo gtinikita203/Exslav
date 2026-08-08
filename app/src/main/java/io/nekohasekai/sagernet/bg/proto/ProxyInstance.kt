@@ -174,6 +174,14 @@ class ProxyInstance(profile: ProxyEntity, val service: BaseService.Interface) : 
 // ------------- stats -------------
 
     private fun queryStats(tag: String, direct: String): Long {
+        if (WdttRawTunState.active) {
+            // В raw-режиме v2ray-ядро не запущено — статы берём из go_client.
+            return when (direct) {
+                "uplink" -> WdttRawTunState.txBytes
+                "downlink" -> WdttRawTunState.rxBytes
+                else -> 0L
+            }
+        }
         return v2rayPoint.queryStats(tag, direct)
     }
 
@@ -217,12 +225,26 @@ class ProxyInstance(profile: ProxyEntity, val service: BaseService.Interface) : 
 
     var uplinkProxy = 0L
     var downlinkProxy = 0L
+    private var lastRawTx = 0L
+    private var lastRawRx = 0L
     var uplinkTotalDirect = 0L
     var downlinkTotalDirect = 0L
 
     private val outboundStats = OutboundStats(profile)
     fun outboundStats(): Pair<OutboundStats, HashMap<Long, OutboundStats>> {
         if (!isInitialized()) return outboundStats to statsOutbounds
+        if (WdttRawTunState.active) {
+            // В raw-режиме ядро не запущено: статы считаем напрямую из go_client,
+            // возвращая разницу между предыдущим и текущим чтением как "сессию".
+            val raw = WdttRawTunState
+            uplinkProxy = raw.txBytes - lastRawTx
+            downlinkProxy = raw.rxBytes - lastRawRx
+            lastRawTx = raw.txBytes
+            lastRawRx = raw.rxBytes
+            outboundStats.uplinkTotal = raw.txBytes
+            outboundStats.downlinkTotal = raw.rxBytes
+            return outboundStats to statsOutbounds
+        }
         uplinkProxy = 0L
         downlinkProxy = 0L
 
@@ -281,6 +303,7 @@ class ProxyInstance(profile: ProxyEntity, val service: BaseService.Interface) : 
 
     fun bypassStats(direct: String): Long {
         if (!isInitialized()) return 0L
+        if (WdttRawTunState.active) return 0L // в raw-режиме нет "direct" (не-sieved) трафика через ядро
         return queryStats(config.bypassTag, direct)
     }
 

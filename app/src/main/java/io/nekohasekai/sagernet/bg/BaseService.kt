@@ -266,6 +266,14 @@ class BaseService {
         }
 
         override fun urlTest(): Int {
+            // В raw-режиме v2ray-ядро не запущено — тестируем живость go_client-туннеля.
+            if (io.nekohasekai.sagernet.bg.proto.WdttRawTunState.active) {
+                val raw = io.nekohasekai.sagernet.bg.proto.WdttRawTunState
+                if (raw.workers > 0 && raw.txBytes + raw.rxBytes > 0) {
+                    return 1
+                }
+                error("wdtt: tunnel not ready (workers=${raw.workers})")
+            }
             val v2rayPoint = data?.proxy?.v2rayPoint ?: error("core not started")
             try {
                 return Libexclavecore.urlTest(

@@ -121,6 +121,16 @@ abstract class V2RayInstance(
     @SuppressLint("SetJavaScriptEnabled")
     override fun launch() {
         val context = SagerNet.application
+
+        if (WdttRawTunState.active) {
+            // Raw-режим WDTT: v2ray-ядро НЕ запускаем — весь трафик идёт через
+            // go_client напрямую (TUN fd передан в VpnService.startVpn()).
+            // Фейковый WG-bean нужен только для профиля; реальный WG-handshake
+            // к 127.0.0.1 никому не нужен и вызывает перезапуск туннеля.
+            Log.i("WDTT", "Raw mode active, skipping v2ray core launch (go_client handles all traffic)")
+            return
+        }
+
         for ((_, chain) in config.index) {
             chain.entries.forEachIndexed { _, (triple, profile) ->
                 val port = triple.first
@@ -256,6 +266,11 @@ abstract class V2RayInstance(
             wdttProcess?.destroy()
             wdttProcess = null
             Log.i("WDTT", "wdtt process destroyed")
+        }
+
+        if (WdttRawTunState.active) {
+            Log.i("WDTT", "Clearing raw TUN state on close")
+            WdttRawTunState.clear()
         }
 
         for (instance in externalInstances.values) {

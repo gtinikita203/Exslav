@@ -53,6 +53,7 @@ public class AnyTLSBean extends AbstractBean {
     public String realityShortId;
     public String realityFingerprint;
     public Boolean realityDisableX25519Mlkem768;
+    public String realitySpiderX;
     public String mtlsCertificate;
     public String mtlsCertificatePrivateKey;
     public String serverNameToVerify;
@@ -81,6 +82,7 @@ public class AnyTLSBean extends AbstractBean {
         if (realityShortId == null) realityShortId = "";
         if (realityFingerprint == null) realityFingerprint = "chrome";
         if (realityDisableX25519Mlkem768 == null) realityDisableX25519Mlkem768 = false;
+        if (realitySpiderX == null) realitySpiderX = "";
         if (mtlsCertificate == null) mtlsCertificate = "";
         if (mtlsCertificatePrivateKey == null) mtlsCertificatePrivateKey = "";
         if (serverNameToVerify == null) serverNameToVerify = "";
@@ -89,7 +91,7 @@ public class AnyTLSBean extends AbstractBean {
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(8);
+        output.writeInt(9);
         super.serialize(output);
         output.writeString(password);
         output.writeInt(idleSessionCheckInterval);
@@ -116,6 +118,7 @@ public class AnyTLSBean extends AbstractBean {
         output.writeString(serverNameToVerify);
         output.writeBoolean(disableReuse);
         output.writeString(echQueryName);
+        output.writeString(realitySpiderX);
     }
 
     @Override
@@ -171,6 +174,9 @@ public class AnyTLSBean extends AbstractBean {
         if (version >= 8) {
             echQueryName = input.readString();
         }
+        if (version >= 9) {
+            realitySpiderX = input.readString();
+        }
     }
 
     @Override
@@ -201,6 +207,7 @@ public class AnyTLSBean extends AbstractBean {
         bean.realityDisableX25519Mlkem768 = realityDisableX25519Mlkem768;
         bean.disableReuse = disableReuse;
         bean.echQueryName = echQueryName;
+        bean.realitySpiderX = realitySpiderX;
     }
 
     @NotNull

@@ -923,6 +923,7 @@ fun buildV2RayConfig(
                                                 if (bean.realitySpiderX.isNotEmpty()) {
                                                     spiderX = bean.realitySpiderX
                                                 }
+                                                version = "26.7.28"
                                             }
                                         }
                                     }
@@ -1689,6 +1690,7 @@ fun buildV2RayConfig(
                                                 if (bean.realitySpiderX.isNotEmpty()) {
                                                     spiderX = bean.realitySpiderX
                                                 }
+                                                version = "26.7.28"
                                             }
                                         }
                                     }

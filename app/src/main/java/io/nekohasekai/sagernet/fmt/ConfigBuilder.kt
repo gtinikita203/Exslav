@@ -708,7 +708,7 @@ fun buildV2RayConfig(
                                                             id = bean.uuid
                                                             encryption = bean.encryption
                                                             if (bean.flow.isNotEmpty()) {
-                                                                flow = bean.flow
+                                                                flow = if (bean.flow == "xtls-rprx-vision-udp443") "xtls-rprx-vision" else bean.flow
                                                             }
                                                         })
                                                 })
@@ -923,7 +923,6 @@ fun buildV2RayConfig(
                                                 if (bean.realitySpiderX.isNotEmpty()) {
                                                     spiderX = bean.realitySpiderX
                                                 }
-                                                version = "26.7.28"
                                             }
                                         }
                                     }
@@ -1690,7 +1689,6 @@ fun buildV2RayConfig(
                                                 if (bean.realitySpiderX.isNotEmpty()) {
                                                     spiderX = bean.realitySpiderX
                                                 }
-                                                version = "26.7.28"
                                             }
                                         }
                                     }

@@ -920,6 +920,10 @@ fun buildV2RayConfig(
                                                 if (DataStore.realityDisableX25519Mlkem768 || bean.realityDisableX25519Mlkem768 && !forExport) {
                                                     disableX25519MLKEM768 = true
                                                 }
+                                                if (bean.realitySpiderX.isNotEmpty()) {
+                                                    spiderX = bean.realitySpiderX
+                                                }
+                                                version = "26.7.28"
                                             }
                                         }
                                     }
@@ -1683,6 +1687,10 @@ fun buildV2RayConfig(
                                                 if (DataStore.realityDisableX25519Mlkem768 || bean.realityDisableX25519Mlkem768 && !forExport) {
                                                     disableX25519MLKEM768 = true
                                                 }
+                                                if (bean.realitySpiderX.isNotEmpty()) {
+                                                    spiderX = bean.realitySpiderX
+                                                }
+                                                version = "26.7.28"
                                             }
                                         }
                                     }

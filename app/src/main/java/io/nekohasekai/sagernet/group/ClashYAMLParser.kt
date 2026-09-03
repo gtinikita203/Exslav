@@ -367,6 +367,9 @@ fun parseClashProxy(proxy: Map<String, Any?>): List<AbstractBean> {
                 bean.security = "reality"
                 bean.realityPublicKey = it.getString("public-key")?.ifEmpty { return listOf() }
                 bean.realityShortId = it.getString("short-id")
+                (it.getString("spider-x") ?: it.getString("spiderX") ?: it.getString("spider"))?.also { spx ->
+                    bean.realitySpiderX = spx
+                }
             }
             proxy.getString("client-fingerprint")?.takeIf { it.isNotEmpty() }?.also { fp ->
                 if (bean.security == "reality") {

@@ -355,6 +355,9 @@ fun parseV2Ray(link: String): StandardV2RayBean {
             (url.queryParameter("fp") ?: url.queryParameter("fingerprint"))?.takeIf { it.isNotEmpty() }?.let {
                 bean.realityFingerprint = normalizeRealityFingerprint(it)
             }
+            (url.queryParameter("spx") ?: url.queryParameter("spiderX") ?: url.queryParameter("spider"))?.takeIf { it.isNotEmpty() }?.let {
+                bean.realitySpiderX = it
+            }
             if (bean is VLESSBean) {
                 url.queryParameter("flow")?.let {
                     when (it) {
@@ -1119,6 +1122,9 @@ fun StandardV2RayBean.toUri(): String? {
             }
             val fp = realityFingerprint.ifEmpty { "chrome" }
             builder.addQueryParameter("fp", exportRealityFingerprint(fp))
+            if (realitySpiderX.isNotEmpty()) {
+                builder.addQueryParameter("spx", realitySpiderX)
+            }
             if (this is VLESSBean && flow.isNotEmpty()) {
                 builder.addQueryParameter("flow", flow.removeSuffix("-udp443"))
             }

@@ -442,6 +442,7 @@
     <string name="reality_public_key">REALITY public key</string>
     <string name="reality_short_id">REALITY Short ID</string>
     <string name="reality_fingerprint">REALITY uTLS fingerprint</string>
+    <string name="reality_spider_x">REALITY SpiderX (path)</string>
     <string name="wireguard_reserved">Reserved</string>
     <string name="bootstrap_dns">Bootstrap DNS</string>
     <string name="use_local_dns_as_bootstrap_dns">Use system DNS as Bootstrap DNS</string>

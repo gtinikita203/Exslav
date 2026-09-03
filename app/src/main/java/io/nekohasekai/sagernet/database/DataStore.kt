@@ -343,6 +343,7 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     var serverRealityMldsa65Verify by profileCacheStore.string(Key.SERVER_REALITY_MLDSA65_VERIFY)
     var serverRealityFingerprint by profileCacheStore.string(Key.SERVER_REALITY_FINGERPRINT)
     var serverRealityDisableX25519Mlkem768 by profileCacheStore.boolean(Key.SERVER_REALITY_DISABLE_X25519MLKEM768)
+    var serverRealitySpiderX by profileCacheStore.string(Key.SERVER_REALITY_SPIDER_X)
     var serverGrpcServiceNameCompat by profileCacheStore.boolean(Key.SERVER_GRPC_SERVICE_NAME_COMPAT)
     var serverGrpcMultiMode by profileCacheStore.boolean(Key.SERVER_GRPC_MULTI_MODE)
     var serverMekyaKcpSeed by profileCacheStore.string(Key.SERVER_MEKYA_KCP_SEED)

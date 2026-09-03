@@ -225,6 +225,9 @@ fun parseV2RayOutbound(outbound: JsonObject): List<AbstractBean> {
                                 realitySettings.getString("fingerprint")?.takeIf { it.isNotEmpty() }?.also {
                                     v2rayBean.realityFingerprint = io.nekohasekai.sagernet.fmt.v2ray.normalizeRealityFingerprint(it)
                                 }
+                                (realitySettings.getString("spiderX") ?: realitySettings.getString("spider_x") ?: realitySettings.getString("spider") ?: realitySettings.getString("spx"))?.takeIf { it.isNotEmpty() }?.also {
+                                    v2rayBean.realitySpiderX = it
+                                }
                             }
                         }
                     }

@@ -188,6 +188,7 @@ object Key {
     const val SERVER_REALITY_MLDSA65_VERIFY = "serverRealityMldsa65Verify"
     const val SERVER_REALITY_FINGERPRINT = "serverRealityFingerprint"
     const val SERVER_REALITY_DISABLE_X25519MLKEM768 = "serverRealityDisableX25519Mlkem768"
+    const val SERVER_REALITY_SPIDER_X = "serverRealitySpiderX"
 
     const val SERVER_GRPC_CATAGORY = "serverGrpcCategory"
     const val SERVER_GRPC_SERVICE_NAME_COMPAT = "serverGrpcServiceNameCompat"

@@ -143,6 +143,7 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
         DataStore.serverRealityMldsa65Verify = realityMldsa65Verify
         DataStore.serverRealityFingerprint = realityFingerprint
         DataStore.serverRealityDisableX25519Mlkem768 = realityDisableX25519Mlkem768
+        DataStore.serverRealitySpiderX = realitySpiderX
 
         DataStore.serverGrpcServiceNameCompat = grpcServiceNameCompat
         DataStore.serverGrpcMultiMode = grpcMultiMode
@@ -253,6 +254,7 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
         realityMldsa65Verify = DataStore.serverRealityMldsa65Verify
         realityFingerprint = DataStore.serverRealityFingerprint
         realityDisableX25519Mlkem768 = DataStore.serverRealityDisableX25519Mlkem768
+        realitySpiderX = DataStore.serverRealitySpiderX
 
         grpcServiceNameCompat = DataStore.serverGrpcServiceNameCompat
         grpcMultiMode = DataStore.serverGrpcMultiMode
@@ -319,6 +321,7 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
     lateinit var realityMldsa65Verify: EditTextPreference
     lateinit var realityFingerprint: ListPreference
     lateinit var realityDisableX25519Mlkem768: SwitchPreference
+    lateinit var realitySpiderX: EditTextPreference
 
     lateinit var packetEncoding: ListPreference
 
@@ -406,6 +409,7 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
         realityMldsa65Verify = findPreference(Key.SERVER_REALITY_MLDSA65_VERIFY)!!
         realityFingerprint = findPreference(Key.SERVER_REALITY_FINGERPRINT)!!
         realityDisableX25519Mlkem768 = findPreference(Key.SERVER_REALITY_DISABLE_X25519MLKEM768)!!
+        realitySpiderX = findPreference(Key.SERVER_REALITY_SPIDER_X)!!
         realityDisableX25519Mlkem768.summary = if (DataStore.realityDisableX25519Mlkem768) {
             getString(R.string.option_globally_enabled)
         } else {
@@ -809,6 +813,7 @@ abstract class StandardV2RaySettingsActivity : ProfileSettingsActivity<StandardV
         serverNameToVerify.isVisible = security == "tls"
         realityFingerprint.isVisible = security == "reality"
         realityDisableX25519Mlkem768.isVisible = security == "reality"
+        realitySpiderX.isVisible = security == "reality"
     }
 
     override fun onAttachedToWindow() {

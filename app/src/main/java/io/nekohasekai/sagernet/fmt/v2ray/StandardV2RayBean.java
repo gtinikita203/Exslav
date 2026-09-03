@@ -75,6 +75,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
     public String realityMldsa65Verify;
     public String realityFingerprint;
     public Boolean realityDisableX25519Mlkem768;
+    public String realitySpiderX;
 
     public Long hy2DownMbps;
     public Long hy2UpMbps;
@@ -155,6 +156,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
         if (realityMldsa65Verify == null) realityMldsa65Verify = "";
         if (realityFingerprint == null) realityFingerprint = "chrome";
         if (realityDisableX25519Mlkem768 == null) realityDisableX25519Mlkem768 = false;
+        if (realitySpiderX == null) realitySpiderX = "";
 
         if (hy2DownMbps == null) hy2DownMbps = 0L;
         if (hy2UpMbps == null) hy2UpMbps = 0L;
@@ -179,7 +181,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(39);
+        output.writeInt(40);
         super.serialize(output);
 
         output.writeString(uuid);
@@ -317,6 +319,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
         output.writeString(serverNameToVerify);
         output.writeBoolean(hy2ChromeParrot);
         output.writeString(echQueryName);
+        output.writeString(realitySpiderX);
     }
 
     @Override
@@ -579,6 +582,9 @@ public abstract class StandardV2RayBean extends AbstractBean {
         if (version >= 39) {
             echQueryName = input.readString();
         }
+        if (version >= 40) {
+            realitySpiderX = input.readString();
+        }
     }
 
     @Override
@@ -644,6 +650,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
         bean.singMuxMaxStreams = singMuxMaxStreams;
         bean.singMuxPadding = singMuxPadding;
         bean.hy2ChromeParrot = hy2ChromeParrot;
+        bean.realitySpiderX = realitySpiderX;
     }
 
     @Override

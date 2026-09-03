@@ -1160,6 +1160,7 @@ public class V2RayConfig {
         public String fingerprint;
         public String version;
         public Boolean disableX25519MLKEM768;
+        public String spiderX;
 
     }
 

@@ -224,6 +224,9 @@ fun parseSingBoxOutbound(outbound: JsonObject): List<AbstractBean> {
                                             reality.getString("short_id")?.also {
                                                 v2rayBean.realityShortId = it
                                             }
+                                            (reality.getString("spider_x") ?: reality.getString("spiderX") ?: reality.getString("spider"))?.also {
+                                                v2rayBean.realitySpiderX = it
+                                            }
                                         }
                                     }
                                 }

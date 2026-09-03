@@ -237,6 +237,11 @@
             app:title="@string/reality_fingerprint"
             app:useSimpleSummaryProvider="true" />
         <EditTextPreference
+            app:icon="@drawable/ic_baseline_link_24"
+            app:key="serverRealitySpiderX"
+            app:title="@string/reality_spider_x"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
             app:icon="@drawable/ic_action_lock"
             app:key="serverMtlsCertificate"
             app:title="@string/mtls_certificate"

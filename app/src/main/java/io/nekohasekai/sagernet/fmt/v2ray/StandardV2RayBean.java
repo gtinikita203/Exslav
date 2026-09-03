@@ -155,7 +155,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
         if (realityShortId == null) realityShortId = "";
         if (realityMldsa65Verify == null) realityMldsa65Verify = "";
         if (realityFingerprint == null) realityFingerprint = "chrome";
-        if (realityDisableX25519Mlkem768 == null) realityDisableX25519Mlkem768 = false;
+        if (realityDisableX25519Mlkem768 == null) realityDisableX25519Mlkem768 = true;
         if (realitySpiderX == null) realitySpiderX = "";
 
         if (hy2DownMbps == null) hy2DownMbps = 0L;

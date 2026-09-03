@@ -81,7 +81,7 @@ public class AnyTLSBean extends AbstractBean {
         if (realityPublicKey == null) realityPublicKey = "";
         if (realityShortId == null) realityShortId = "";
         if (realityFingerprint == null) realityFingerprint = "chrome";
-        if (realityDisableX25519Mlkem768 == null) realityDisableX25519Mlkem768 = false;
+        if (realityDisableX25519Mlkem768 == null) realityDisableX25519Mlkem768 = true;
         if (realitySpiderX == null) realitySpiderX = "";
         if (mtlsCertificate == null) mtlsCertificate = "";
         if (mtlsCertificatePrivateKey == null) mtlsCertificatePrivateKey = "";

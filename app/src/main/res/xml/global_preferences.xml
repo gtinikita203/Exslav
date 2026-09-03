@@ -227,6 +227,7 @@
             app:title="@string/connection_test_url"
             app:useSimpleSummaryProvider="true" />
         <SwitchPreference
+            app:defaultValue="true"
             app:icon="@drawable/baseline_construction_24"
             app:key="realityDisableX25519Mlkem768"
             app:summary="@string/reality_breaking_change_summary"

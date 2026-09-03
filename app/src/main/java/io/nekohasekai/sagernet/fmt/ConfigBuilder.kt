@@ -48,6 +48,7 @@ import io.nekohasekai.sagernet.fmt.internal.BalancerBean
 import io.nekohasekai.sagernet.fmt.internal.ConfigBean
 import io.nekohasekai.sagernet.fmt.juicity.JuicityBean
 import io.nekohasekai.sagernet.fmt.mieru.MieruBean
+import io.nekohasekai.sagernet.fmt.shadowquic.ShadowQUICBean
 import io.nekohasekai.sagernet.fmt.shadowsocks.ShadowsocksBean
 import io.nekohasekai.sagernet.fmt.shadowsocksr.ShadowsocksRBean
 import io.nekohasekai.sagernet.fmt.socks.SOCKSBean
@@ -119,7 +120,6 @@ import io.nekohasekai.sagernet.ktx.mkPort
 import io.nekohasekai.sagernet.ktx.parseJson
 import io.nekohasekai.sagernet.ktx.toHysteriaPort
 import io.nekohasekai.sagernet.ktx.unescapeLineFeed
-import io.nekohasekai.sagernet.ktx.uuidOrGenerate
 import io.nekohasekai.sagernet.utils.PackageCache
 import kotlin.io.encoding.Base64
 import libexclavecore.Libexclavecore
@@ -528,35 +528,25 @@ fun buildV2RayConfig(
                     // but this is not the main function of this software, just keep it broken
                     if (bean.security == "none" && bean.host.isNotEmpty()) {
                         val host = try {
-                            val u = Libexclavecore.newURL("placeholder").apply {
-                                rawHost = if (Libexclavecore.isIPv6(bean.host)) "[${bean.host}]" else bean.host
-                            }.string
-                            Libexclavecore.parseURL(u).host
+                            Libexclavecore.splitHostPort(bean.host).host
                         } catch (_: Exception) {
                             bean.host
                         }
-                        wsRules[host] = RoutingObject.RuleObject().apply {
-                            type = "field"
-                            outboundTag = TAG_DIRECT
-                            port = bean.serverPort.toString()
-                            if (Libexclavecore.isIP(host)) {
-                                ip = listOf(host)
-                                if (DataStore.domainStrategy != "AsIs") {
-                                    skipDomain = true
-                                }
-                            } else {
+                        if (host.isNotEmpty() && !Libexclavecore.isIP(host)) {
+                            wsRules[host] = RoutingObject.RuleObject().apply {
+                                type = "field"
+                                outboundTag = TAG_DIRECT
+                                port = bean.serverPort.toString()
                                 domains = listOf(host)
                             }
                         }
                     }
-                    if (bean.security != "none" && bean.sni.isNotEmpty()) {
+                    if (bean.security != "none" && bean.sni.isNotEmpty() && !Libexclavecore.isIP(bean.sni)) {
                         wsRules[bean.sni] = RoutingObject.RuleObject().apply {
                             type = "field"
                             outboundTag = TAG_DIRECT
                             port = bean.serverPort.toString()
-                            if (!Libexclavecore.isIP(bean.sni)) {
-                                domains = listOf(bean.sni)
-                            }
+                            domains = listOf(bean.sni)
                         }
                     }
                     if (bean.serverAddress.isNotEmpty()) {
@@ -659,7 +649,7 @@ fun buildV2RayConfig(
                                 if (proxyEntity.naiveBean != null && proxyEntity.naiveBean!!.singUoT && DataStore.experimentalFlagsProperties.getBooleanProperty( "singuot")) {
                                     uot = true
                                 }
-                                if (proxyEntity.naiveBean != null || proxyEntity.shadowquicBean != null) {
+                                if (proxyEntity.naiveBean != null) {
                                     directNeedsInterruption = true
                                 }
                             })
@@ -677,7 +667,7 @@ fun buildV2RayConfig(
                                                     port = bean.serverPort
                                                     users = listOf(VMessOutboundConfigurationObject.ServerObject.UserObject()
                                                         .apply {
-                                                            id = uuidOrGenerate(bean.uuid)
+                                                            id = bean.uuid
                                                             if (bean.alterId > 0) {
                                                                 alterId = bean.alterId
                                                             }
@@ -715,7 +705,7 @@ fun buildV2RayConfig(
                                                     port = bean.serverPort
                                                     users = listOf(VLESSOutboundConfigurationObject.ServerObject.UserObject()
                                                         .apply {
-                                                            id = uuidOrGenerate(bean.uuid)
+                                                            id = bean.uuid
                                                             encryption = bean.encryption
                                                             if (bean.flow.isNotEmpty()) {
                                                                 flow = bean.flow
@@ -895,8 +885,10 @@ fun buildV2RayConfig(
                                                 if (bean.echEnabled) {
                                                     ech = TLSObject.ECHObject().apply {
                                                         enabled = bean.echEnabled
-                                                        if (bean.echConfig.isNotEmpty()) {
-                                                            config = bean.echConfig
+                                                        if (bean.echConfigList.isNotEmpty()) {
+                                                            config = bean.echConfigList
+                                                        } else if (bean.echQueryName.isNotEmpty()) {
+                                                            queryDomain = bean.echQueryName
                                                         }
                                                     }
                                                 }
@@ -1183,8 +1175,15 @@ fun buildV2RayConfig(
                                         }
                                         "hysteria2" -> {
                                             hy2Settings = Hysteria2Object().apply {
-                                                // V2Ray transport is TCP only so it is safe to omit MaxDatagramFrameSize.
-                                                omitMaxDatagramFrameSize = true
+                                                if (bean.hy2ChromeParrot) {
+                                                    // Chrome always advertises QUIC datagram support.
+                                                    // omitMaxDatagramFrameSize is in fact always disabled regardless of the value.
+                                                    // Do not set omitMaxDatagramFrameSize to avoid user confusion.
+                                                    chromeParrot = true
+                                                } else {
+                                                    // V2Ray transport is TCP only so it is safe to omit MaxDatagramFrameSize.
+                                                    omitMaxDatagramFrameSize = true
+                                                }
                                                 if (bean.hy2Password.isNotEmpty()) {
                                                     password = bean.hy2Password
                                                 }
@@ -1346,7 +1345,12 @@ fun buildV2RayConfig(
                                     security = "tls"
                                     hy2Settings = Hysteria2Object().apply {
                                         use_udp_extension = true
-                                        if (DataStore.hysteria2OmitMaxDatagramFrameSize || bean.omitMaxDatagramFrameSize) {
+                                        if (bean.chromeParrot) {
+                                            // Chrome always advertise QUIC datagram support.
+                                            // omitMaxDatagramFrameSize is in fact always disabled regardless of the value.
+                                            // Do not set omitMaxDatagramFrameSize to avoid user confusion.
+                                            chromeParrot = true
+                                        } else if (DataStore.hysteria2OmitMaxDatagramFrameSize || bean.omitMaxDatagramFrameSize) {
                                             omitMaxDatagramFrameSize = true
                                         }
                                         if (bean.auth.isNotEmpty()) {
@@ -1427,8 +1431,10 @@ fun buildV2RayConfig(
                                         if (bean.echEnabled) {
                                             ech = TLSObject.ECHObject().apply {
                                                 enabled = bean.echEnabled
-                                                if (bean.echConfig.isNotEmpty()) {
-                                                    config = bean.echConfig
+                                                if (bean.echConfigList.isNotEmpty()) {
+                                                    config = bean.echConfigList
+                                                } else if (bean.echQueryName.isNotEmpty()) {
+                                                    queryDomain = bean.echQueryName
                                                 }
                                             }
                                         }
@@ -1497,8 +1503,10 @@ fun buildV2RayConfig(
                                         if (bean.echEnabled) {
                                             ech = TLSObject.ECHObject().apply {
                                                 enabled = bean.echEnabled
-                                                if (bean.echConfig.isNotEmpty()) {
-                                                    config = bean.echConfig
+                                                if (bean.echConfigList.isNotEmpty()) {
+                                                    config = bean.echConfigList
+                                                } else if (bean.echQueryName.isNotEmpty()) {
+                                                    queryDomain = bean.echQueryName
                                                 }
                                             }
                                         }
@@ -1564,8 +1572,10 @@ fun buildV2RayConfig(
                                         if (bean.echEnabled) {
                                             ech = TLSObject.ECHObject().apply {
                                                 enabled = bean.echEnabled
-                                                if (bean.echConfig.isNotEmpty()) {
-                                                    config = bean.echConfig
+                                                if (bean.echConfigList.isNotEmpty()) {
+                                                    config = bean.echConfigList
+                                                } else if (bean.echQueryName.isNotEmpty()) {
+                                                    queryDomain = bean.echQueryName
                                                 }
                                             }
                                         }
@@ -1641,8 +1651,10 @@ fun buildV2RayConfig(
                                                 if (bean.echEnabled) {
                                                     ech = TLSObject.ECHObject().apply {
                                                         enabled = bean.echEnabled
-                                                        if (bean.echConfig.isNotEmpty()) {
-                                                            config = bean.echConfig
+                                                        if (bean.echConfigList.isNotEmpty()) {
+                                                            config = bean.echConfigList
+                                                        } else if (bean.echQueryName.isNotEmpty()) {
+                                                            queryDomain = bean.echQueryName
                                                         }
                                                     }
                                                 }
@@ -1755,8 +1767,10 @@ fun buildV2RayConfig(
                                         if (bean.echEnabled) {
                                             ech = TLSObject.ECHObject().apply {
                                                 enabled = bean.echEnabled
-                                                if (bean.echConfig.isNotEmpty()) {
-                                                    config = bean.echConfig
+                                                if (bean.echConfigList.isNotEmpty()) {
+                                                    config = bean.echConfigList
+                                                } else if (bean.echQueryName.isNotEmpty()) {
+                                                    queryDomain = bean.echQueryName
                                                 }
                                             }
                                         }
@@ -1775,8 +1789,11 @@ fun buildV2RayConfig(
                                     reuse = bean.reuse
                                     if (version == SnellBean.VERSION_4) {
                                         obfsMode = bean.obfsMode
-                                        if (bean.obfsMode != SnellBean.OBFS_NONE && bean.obfsHost.isNotEmpty()) {
+                                        if ((bean.obfsMode == SnellBean.OBFS_HTTP || bean.obfsMode == SnellBean.OBFS_TLS) && bean.obfsHost.isNotEmpty()) {
                                             obfsHost = bean.obfsHost
+                                        }
+                                        if (bean.obfsMode == SnellBean.OBFS_HTTP && bean.obfsURI.isNotEmpty()) {
+                                            obfsURI = bean.obfsURI
                                         }
                                     }
                                     if (version == SnellBean.VERSION_6) {
@@ -1883,8 +1900,10 @@ fun buildV2RayConfig(
                                         if (bean.echEnabled) {
                                             ech = TLSObject.ECHObject().apply {
                                                 enabled = bean.echEnabled
-                                                if (bean.echConfig.isNotEmpty()) {
-                                                    config = bean.echConfig
+                                                if (bean.echConfigList.isNotEmpty()) {
+                                                    config = bean.echConfigList
+                                                } else if (bean.echQueryName.isNotEmpty()) {
+                                                    queryDomain = bean.echQueryName
                                                 }
                                             }
                                         }
@@ -1893,6 +1912,23 @@ fun buildV2RayConfig(
                                         }
                                     }
                                 }
+                            } else if (bean is ShadowQUICBean) {
+                                protocol = "shadowquic"
+                                settings = LazyOutboundConfigurationObject(this, V2RayConfig.ShadowQUICOutboundConfigurationObject().apply {
+                                    address = bean.serverAddress
+                                    port = bean.serverPort
+                                    username = bean.username
+                                    password = bean.password
+                                    congestionControl = bean.congestionControl
+                                    udpOverStream = udpOverStream
+                                    zeroRTTHandshake = zeroRTTHandshake
+                                    if (bean.sni.isNotEmpty()) {
+                                        serverName = bean.sni
+                                    }
+                                    if (bean.alpn.listByLineOrComma().isNotEmpty()) {
+                                        alpn = bean.alpn.listByLineOrComma()
+                                    }
+                                })
                             }
                             if (bean is StandardV2RayBean && bean.mux) {
                                 mux = OutboundObject.MuxObject().apply {
@@ -2474,38 +2510,66 @@ fun buildV2RayConfig(
                     }
                     when (bean) {
                         is StandardV2RayBean -> {
-                            if (bean.echEnabled && bean.echConfig.isEmpty() && !Libexclavecore.isIP(bean.sni)) {
-                                bypassDomainSkipFakeDns.add("full:${bean.sni}")
+                            if (bean.echEnabled && bean.echConfigList.isEmpty()) {
+                                if (bean.echQueryName.isNotEmpty()) {
+                                    bypassDomainSkipFakeDns.add("full:${bean.echQueryName}")
+                                } else {
+                                    bypassDomainSkipFakeDns.add("full:${bean.sni}")
+                                }
                             }
                         }
                         is AnyTLSBean -> {
-                            if (bean.echEnabled && bean.echConfig.isEmpty() && !Libexclavecore.isIP(bean.sni)) {
-                                bypassDomainSkipFakeDns.add("full:${bean.sni}")
+                            if (bean.echEnabled && bean.echConfigList.isEmpty()) {
+                                if (bean.echQueryName.isNotEmpty()) {
+                                    bypassDomainSkipFakeDns.add("full:${bean.echQueryName}")
+                                } else {
+                                    bypassDomainSkipFakeDns.add("full:${bean.sni}")
+                                }
                             }
                         }
                         is Http3Bean -> {
-                            if (bean.echEnabled && bean.echConfig.isEmpty() && !Libexclavecore.isIP(bean.sni)) {
-                                bypassDomainSkipFakeDns.add("full:${bean.sni}")
+                            if (bean.echEnabled && bean.echConfigList.isEmpty()) {
+                                if (bean.echQueryName.isNotEmpty()) {
+                                    bypassDomainSkipFakeDns.add("full:${bean.echQueryName}")
+                                } else {
+                                    bypassDomainSkipFakeDns.add("full:${bean.sni}")
+                                }
                             }
                         }
                         is Hysteria2Bean -> {
-                            if (bean.echEnabled && bean.echConfig.isEmpty() && !Libexclavecore.isIP(bean.sni)) {
-                                bypassDomainSkipFakeDns.add("full:${bean.sni}")
+                            if (bean.echEnabled && bean.echConfigList.isEmpty()) {
+                                if (bean.echQueryName.isNotEmpty()) {
+                                    bypassDomainSkipFakeDns.add("full:${bean.echQueryName}")
+                                } else {
+                                    bypassDomainSkipFakeDns.add("full:${bean.sni}")
+                                }
                             }
                         }
                         is JuicityBean -> {
-                            if (bean.echEnabled && bean.echConfig.isEmpty() && !Libexclavecore.isIP(bean.sni)) {
-                                bypassDomainSkipFakeDns.add("full:${bean.sni}")
+                            if (bean.echEnabled && bean.echConfigList.isEmpty()) {
+                                if (bean.echQueryName.isNotEmpty()) {
+                                    bypassDomainSkipFakeDns.add("full:${bean.echQueryName}")
+                                } else {
+                                    bypassDomainSkipFakeDns.add("full:${bean.sni}")
+                                }
                             }
                         }
                         is Tuic5Bean -> {
-                            if (bean.echEnabled && bean.echConfig.isEmpty() && !Libexclavecore.isIP(bean.sni)) {
-                                bypassDomainSkipFakeDns.add("full:${bean.sni}")
+                            if (bean.echEnabled && bean.echConfigList.isEmpty()) {
+                                if (bean.echQueryName.isNotEmpty()) {
+                                    bypassDomainSkipFakeDns.add("full:${bean.echQueryName}")
+                                } else {
+                                    bypassDomainSkipFakeDns.add("full:${bean.sni}")
+                                }
                             }
                         }
                         is TrustTunnelBean -> {
-                            if (bean.echEnabled && bean.echConfig.isEmpty() && !Libexclavecore.isIP(bean.sni)) {
-                                bypassDomainSkipFakeDns.add("full:${bean.sni}")
+                            if (bean.echEnabled && bean.echConfigList.isEmpty()) {
+                                if (bean.echQueryName.isNotEmpty()) {
+                                    bypassDomainSkipFakeDns.add("full:${bean.echQueryName}")
+                                } else {
+                                    bypassDomainSkipFakeDns.add("full:${bean.sni}")
+                                }
                             }
                         }
                     }

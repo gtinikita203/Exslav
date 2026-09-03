@@ -1158,11 +1158,6 @@ class ConfigurationFragment @JvmOverloads constructor(
             }
             checkOrderMenu()
 
-            if (!DataStore.experimentalFlagsProperties.getBooleanProperty("shadowquic")) {
-                (parentFragment as? ToolbarFragment)
-                    ?.toolbar?.menu?.findItem(R.id.action_new_shadowquic)?.isVisible  = false
-            }
-
             if (showBackup) {
                 (parentFragment as? ToolbarFragment)
                     ?.toolbar?.menu?.findItem(R.id.action_import_backup)?.isVisible = true
@@ -1568,10 +1563,10 @@ class ConfigurationFragment @JvmOverloads constructor(
                     notifyDataSetChanged()
 
                     if (selectedProfileIndex != -1 && !scrolled) {
-                        configurationListView.scrollTo(selectedProfileIndex, true)
+                        layoutManager.scrollToPositionWithOffset(selectedProfileIndex, 0)
                         scrolled = true
                     } else if (newProfiles.isNotEmpty() && !scrolled) {
-                        configurationListView.scrollTo(0, true)
+                        layoutManager.scrollToPositionWithOffset(0, 0)
                         scrolled = true
                     }
 

@@ -566,8 +566,11 @@
         <item>ios</item>
         <item>edge</item>
         <item>qq</item>
+        <item>360</item>
+        <item>android</item>
         <item>random</item>
         <item>randomized</item>
+        <item>randomizedalpn</item>
         <item>randomizednoalpn</item>
         <item>hellofirefox_120</item>
         <item>hellofirefox_148</item>
@@ -788,6 +791,7 @@
     <string-array name="language_entry">
         <item>@string/language_system_default</item>
         <item>@string/language_ar_display_name</item>
+        <item>@string/language_cs_display_name</item>
         <item>@string/language_en_display_name</item>
         <item>@string/language_es_display_name</item>
         <item>@string/language_fa_display_name</item>
@@ -807,6 +811,7 @@
     <string-array name="language_value">
         <item />
         <item>ar</item>
+        <item>cs</item>
         <item>en-US</item>
         <item>es</item>
         <item>fa</item>
@@ -898,8 +903,7 @@
     <string-array name="shadowquic_congestion_control_value">
         <item>bbr</item>
         <item>cubic</item>
-        <item>new-reno</item>
-        <item>brutal</item>
+        <item>new_reno</item>
     </string-array>
 
     <string-array name="hysteria2_obfs_type">
@@ -923,6 +927,13 @@
         <item>default</item>
         <item>unshaped</item>
         <item>unsafe-raw</item>
+    </string-array>
+
+    <string-array name="stun_test_type">
+        <item>@string/stun_test</item>
+        <item>@string/stun_legacy_test</item>
+        <item>@string/udp</item>
+        <item>@string/tcp</item>
     </string-array>
 
 </resources>

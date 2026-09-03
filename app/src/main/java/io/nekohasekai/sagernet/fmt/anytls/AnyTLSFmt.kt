@@ -24,10 +24,20 @@ import libexclavecore.Libexclavecore
 
 fun parseAnyTLS(url: String): AnyTLSBean {
     val link = Libexclavecore.parseURL(url)
+    if (link.queryParameter("security") == "reality") {
+        // We don't parse parameters which do not exist in the specification. v2rayN (?) and others
+        // invented `security=reality` without changing the scheme. Ignoring `security=reality` and
+        // parsing the link as normal AnyTLS will make users unable to connect to the server.
+        // Explicitly ban `security=reality` from importing.
+        error("anytls must use tls")
+    }
     return AnyTLSBean().apply {
         name = link.fragment
-        serverAddress = link.host.ifEmpty { error("empty host") }
-        serverPort = link.port.takeIf { it > 0 } ?: 443
+        serverAddress = link.host
+        serverPort = when {
+            !link.hasPort() -> 443
+            else -> link.port
+        }
         password = link.username
         security = "tls"
         link.queryParameter("sni")?.also {
@@ -35,6 +45,9 @@ fun parseAnyTLS(url: String): AnyTLSBean {
         }
         link.queryParameter("insecure")?.takeIf { it == "1" }?.also {
             allowInsecure = true
+        }
+        (link.queryParameter("fp") ?: link.queryParameter("fingerprint"))?.takeIf { it.isNotEmpty() }?.also {
+            utlsFingerprint = io.nekohasekai.sagernet.fmt.v2ray.normalizeUtlsFingerprint(it)
         }
     }
 }
@@ -44,7 +57,7 @@ fun AnyTLSBean.toUri(): String? {
         error("anytls must use tls")
     }
     val builder = Libexclavecore.newURL("anytls")
-    builder.setHostPort(serverAddress.ifEmpty { error("empty server address") }, serverPort)
+    builder.setHostPort(serverAddress, serverPort)
     if (password.isNotEmpty()) {
         builder.username = password
     }
@@ -56,6 +69,12 @@ fun AnyTLSBean.toUri(): String? {
     if (pinnedPeerCertificateChainSha256.isEmpty() && pinnedPeerCertificatePublicKeySha256.isEmpty() &&
         pinnedPeerCertificateSha256.isEmpty() && serverNameToVerify.listByLineOrComma().isEmpty() && allowInsecure) {
         builder.addQueryParameter("insecure", "1")
+    }
+    if (utlsFingerprint.isNotEmpty()) {
+        val exportFp = io.nekohasekai.sagernet.fmt.v2ray.exportUtlsFingerprint(utlsFingerprint)
+        if (exportFp.isNotEmpty()) {
+            builder.addQueryParameter("fp", exportFp)
+        }
     }
     if (name.isNotEmpty()) {
         builder.fragment = name

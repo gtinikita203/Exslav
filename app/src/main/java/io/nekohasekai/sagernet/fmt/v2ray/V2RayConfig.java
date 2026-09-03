@@ -698,6 +698,8 @@ public class V2RayConfig {
                     return TrustTunnelOutboundConfigurationObject.class;
                 case "snell":
                     return SnellOutboundConfigurationObject.class;
+                case "shadowquic":
+                    return ShadowQUICOutboundConfigurationObject.class;
             }
             return null;
         }
@@ -996,6 +998,7 @@ public class V2RayConfig {
         public String userKey;
         public String obfsMode;
         public String obfsHost;
+        public String obfsURI;
         public Integer version;
         public Boolean reuse;
         public String mode;
@@ -1026,6 +1029,20 @@ public class V2RayConfig {
         public String password;
         public Boolean http3;
         public String domainStrategy;
+
+    }
+
+    public static class ShadowQUICOutboundConfigurationObject implements OutboundConfigurationObject {
+
+        public String address;
+        public Integer port;
+        public String username;
+        public String password;
+        public String congestionControl;
+        public Boolean udpOverStream;
+        public Boolean zeroRTTHandshake;
+        public String serverName;
+        public List<String> alpn;
 
     }
 
@@ -1301,13 +1318,16 @@ public class V2RayConfig {
         public Long hopInterval;
         public Long hopIntervalMin;
         public Long hopIntervalMax;
+        public Boolean disableStatelessReset;
         public Boolean omitMaxDatagramFrameSize;
+        public Boolean chromeParrot;
 
         public static class CongestionObject {
             public String type;
             public Long up_mbps;
             public Long down_mbps;
             public String bbrProfile;
+            public Boolean disableLossCompensation;
         }
 
         public static class OBFSObject {
@@ -1345,6 +1365,7 @@ public class V2RayConfig {
         public String uplinkDataKey;
         public String uplinkChunkSize;
         public Boolean noGRPCHeader;
+        public Boolean parseXForwardedFor;
         public XmuxObject xmux;
         public DownloadSettingsObject downloadSettings;
         public Boolean useBrowserForwarding;

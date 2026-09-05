@@ -58,6 +58,7 @@ import io.nekohasekai.sagernet.bg.SagerConnection
 import io.nekohasekai.sagernet.database.*
 import io.nekohasekai.sagernet.database.preference.OnPreferenceDataStoreChangeListener
 import io.nekohasekai.sagernet.databinding.LayoutMainBinding
+import io.nekohasekai.sagernet.group.GroupUpdater
 import io.nekohasekai.sagernet.fmt.AbstractBean
 import io.nekohasekai.sagernet.fmt.Alerts
 import io.nekohasekai.sagernet.fmt.PluginEntry
@@ -264,7 +265,6 @@ class MainActivity : ThemedActivity(),
             name = initialName
             subscription = SubscriptionBean().apply {
                 link = uri
-                name = initialName
             }
         }
 

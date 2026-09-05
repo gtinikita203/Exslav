@@ -121,7 +121,6 @@ object AgeUpdater : GroupUpdater() {
             val serverTitle = extractSubscriptionTitle { response.getHeader(it) }
             if (!serverTitle.isNullOrBlank()) {
                 proxyGroup.name = serverTitle
-                subscription.name = serverTitle
             }
 
             val updateInterval = extractSubscriptionUpdateInterval { response.getHeader(it) }

@@ -67,11 +67,6 @@
             app:title="@string/ssh_private_key"
             app:useSimpleSummaryProvider="true" />
 
-        <SwitchPreference
-            app:icon="@drawable/ic_baseline_import_contacts_24"
-            app:key="subscriptionDeduplication"
-            app:summary="@string/deduplication_sum"
-            app:title="@string/deduplication" />
 
         <EditTextPreference
             app:icon="@drawable/ic_action_delete"

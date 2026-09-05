@@ -252,10 +252,19 @@ class MainActivity : ThemedActivity(),
     }
 
     suspend fun importSubscription(uri: String) {
+        val initialName = try {
+            android.net.Uri.parse(uri).fragment?.takeIf { it.isNotBlank() }?.let {
+                java.net.URLDecoder.decode(it, "UTF-8")
+            }
+        } catch (_: Throwable) {
+            null
+        } ?: getString(R.string.subscription)
+
         val group = ProxyGroup(type = GroupType.SUBSCRIPTION).apply {
+            name = initialName
             subscription = SubscriptionBean().apply {
                 link = uri
-                name = getString(R.string.subscription)
+                name = initialName
             }
         }
 
@@ -279,7 +288,7 @@ class MainActivity : ThemedActivity(),
 
     private suspend fun finishImportSubscription(subscription: ProxyGroup) {
         GroupManager.createGroup(subscription)
-        // GroupUpdater.startUpdate(subscription, true)
+        GroupUpdater.startUpdate(subscription, true)
     }
 
     suspend fun importProfile(uri: Uri) {

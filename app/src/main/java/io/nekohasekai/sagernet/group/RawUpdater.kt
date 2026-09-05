@@ -23,6 +23,7 @@ package io.nekohasekai.sagernet.group
 import androidx.core.net.toUri
 import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.SagerNet
+import io.nekohasekai.sagernet.bg.SubscriptionUpdater
 import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.GroupManager
 import io.nekohasekai.sagernet.database.ProxyEntity
@@ -127,6 +128,18 @@ object RawUpdater : GroupUpdater() {
                     bytesRemaining = -1L
                     expiryDate = -1L
                 }
+            }
+
+            val serverTitle = extractSubscriptionTitle { response.getHeader(it) }
+            if (!serverTitle.isNullOrBlank()) {
+                proxyGroup.name = serverTitle
+                subscription.name = serverTitle
+            }
+
+            val updateInterval = extractSubscriptionUpdateInterval { response.getHeader(it) }
+            if (updateInterval != null) {
+                subscription.autoUpdate = true
+                subscription.autoUpdateDelay = updateInterval
             }
         }
 
@@ -237,6 +250,9 @@ object RawUpdater : GroupUpdater() {
         subscription.lastUpdated = System.currentTimeMillis() / 1000
         SagerDatabase.groupDao.updateGroup(proxyGroup)
         finishUpdate(proxyGroup)
+        if (subscription.autoUpdate) {
+            SubscriptionUpdater.reconfigureUpdater()
+        }
 
         if (byUser && userInterface != null) {
             userInterface.onUpdateSuccess(proxyGroup, changed, added, updated, deleted, duplicate)

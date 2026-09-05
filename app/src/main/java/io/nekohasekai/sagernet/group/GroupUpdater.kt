@@ -105,6 +105,79 @@ abstract class GroupUpdater {
             GroupManager.postUpdate(proxyGroup)
         }
 
+        fun extractSubscriptionTitle(getHeader: (String) -> String): String? {
+            val headersToTry = listOf(
+                "Profile-Title",
+                "profile-title",
+                "Subscription-Title",
+                "subscription-title",
+                "X-Profile-Title",
+                "x-profile-title"
+            )
+            for (headerName in headersToTry) {
+                val value = getHeader(headerName)
+                if (value.isNotBlank()) {
+                    val trimmed = value.trim()
+                    val decoded = if (trimmed.startsWith("base64:", ignoreCase = true)) {
+                        try {
+                            String(android.util.Base64.decode(trimmed.substring(7).trim(), android.util.Base64.DEFAULT), Charsets.UTF_8).trim()
+                        } catch (_: Throwable) {
+                            trimmed.substring(7).trim()
+                        }
+                    } else {
+                        try {
+                            java.net.URLDecoder.decode(trimmed, "UTF-8").trim()
+                        } catch (_: Throwable) {
+                            trimmed
+                        }
+                    }
+                    if (decoded.isNotBlank()) return decoded
+                }
+            }
+
+            val disposition = getHeader("Content-Disposition").takeIf { it.isNotBlank() }
+                ?: getHeader("content-disposition").takeIf { it.isNotBlank() }
+            if (!disposition.isNullOrBlank()) {
+                val filenameStarRegex = Regex("""filename\*\s*=\s*(?:UTF-8|utf-8)''([^;]+)""", RegexOption.IGNORE_CASE)
+                val filenameNormalRegex = Regex("""filename\s*=\s*"([^"]+)"""", RegexOption.IGNORE_CASE)
+                val filenameBareRegex = Regex("""filename\s*=\s*([^; ]+)""", RegexOption.IGNORE_CASE)
+
+                val rawFilename = filenameStarRegex.find(disposition)?.groupValues?.get(1)
+                    ?: filenameNormalRegex.find(disposition)?.groupValues?.get(1)
+                    ?: filenameBareRegex.find(disposition)?.groupValues?.get(1)
+
+                if (!rawFilename.isNullOrBlank()) {
+                    val decoded = try {
+                        java.net.URLDecoder.decode(rawFilename.trim(), "UTF-8")
+                    } catch (_: Throwable) {
+                        rawFilename.trim()
+                    }
+                    val cleaned = decoded.replace(Regex("""\.(txt|yaml|yml|json|conf|sub)$""", RegexOption.IGNORE_CASE), "").trim()
+                    if (cleaned.isNotBlank()) return cleaned
+                }
+            }
+
+            return null
+        }
+
+        fun extractSubscriptionUpdateInterval(getHeader: (String) -> String): Int? {
+            val headersToTry = listOf(
+                "Profile-Update-Interval",
+                "profile-update-interval",
+                "Subscription-Update-Interval",
+                "subscription-update-interval"
+            )
+            for (headerName in headersToTry) {
+                val value = getHeader(headerName)
+                if (value.isNotBlank()) {
+                    val num = value.trim().toIntOrNull()
+                    if (num != null && num > 0) {
+                        return if (num <= 168) num * 60 else num
+                    }
+                }
+            }
+            return null
+        }
     }
 
 }

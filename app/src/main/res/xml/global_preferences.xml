@@ -234,6 +234,12 @@
             app:title="@string/connection_test_on_network_change" />
         <SwitchPreference
             app:defaultValue="true"
+            app:icon="@drawable/ic_baseline_update_24"
+            app:key="updateSubscriptionBeforeTest"
+            app:summary="@string/update_subscription_before_test_sum"
+            app:title="@string/update_subscription_before_test" />
+        <SwitchPreference
+            app:defaultValue="true"
             app:icon="@drawable/baseline_construction_24"
             app:key="realityDisableX25519Mlkem768"
             app:summary="@string/reality_breaking_change_summary"

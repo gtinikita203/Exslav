@@ -836,6 +836,20 @@ class ConfigurationFragment @JvmOverloads constructor(
         val mainJob = runOnDefaultDispatcher {
             try {
                 val group = DataStore.currentGroup()
+                if (DataStore.updateSubscriptionBeforeTest && group.type == GroupType.SUBSCRIPTION) {
+                    if (dialog != null) {
+                        onMainDispatcher {
+                            dialog.getButton(DialogInterface.BUTTON_NEUTRAL).text = getString(R.string.subscription_update)
+                        }
+                    }
+                    try {
+                        withTimeoutOrNull(5000L) {
+                            GroupUpdater.executeUpdate(group, byUser = false)
+                        }
+                    } catch (_: Throwable) {
+                    }
+                }
+
                 var profilesUnfiltered = SagerDatabase.proxyDao.getByGroup(group.id)
                 profilesUnfiltered = profilesUnfiltered.filter {
                     !it.useBrowserForwarder()

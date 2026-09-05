@@ -87,6 +87,7 @@ object Key {
 
     const val CONNECTION_TEST_URL = "connectionTestURL"
     const val CONNECTION_TEST_ON_NETWORK_CHANGE = "connectionTestOnNetworkChange"
+    const val UPDATE_SUBSCRIPTION_BEFORE_TEST = "updateSubscriptionBeforeTest"
     const val PROBE_URL = "probeUrl"
     const val PROBE_INTERVAL = "probeInterval"
 

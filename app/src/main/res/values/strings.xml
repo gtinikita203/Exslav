@@ -320,6 +320,8 @@
     <string name="subscription_remaining_of_total">%1$s remaining of %2$s</string>
     <string name="connection_test_on_network_change">Auto test on network change</string>
     <string name="connection_test_on_network_change_sum">Automatically test proxy latencies when connecting or switching networks</string>
+    <string name="update_subscription_before_test">Update subscription before test</string>
+    <string name="update_subscription_before_test_sum">Automatically update subscription with short timeout before running connection test</string>
     <string name="subscription_import">Import subscription</string>
     <string name="subscription_import_message">Are you sure you want to import subscription %s? If the source is not trustworthy, your IP and behavior will be leaked.</string>
     <string name="profile_import">Import profile</string>

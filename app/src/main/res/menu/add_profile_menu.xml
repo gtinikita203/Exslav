@@ -29,35 +29,23 @@
             <item android:title="@string/add_profile_methods_manual_settings">
                 <menu>
                     <item
+                        android:id="@+id/action_new_vless"
+                        android:title="@string/action_vless" />
+                    <item
                         android:id="@+id/action_new_ss"
                         android:title="@string/action_shadowsocks" />
+                    <item
+                        android:id="@+id/action_new_hysteria2"
+                        android:title="@string/action_hysteria2" />
+                    <item
+                        android:id="@+id/action_new_tuic5"
+                        android:title="@string/action_tuic5" />
                     <item
                         android:id="@+id/action_new_trojan"
                         android:title="@string/action_trojan" />
                     <item
                         android:id="@+id/action_new_vmess"
                         android:title="@string/action_vmess" />
-                    <item
-                        android:id="@+id/action_new_vless"
-                        android:title="@string/action_vless" />
-                    <item
-                        android:id="@+id/action_new_hysteria2"
-                        android:title="@string/action_hysteria2" />
-                    <item
-                        android:id="@+id/action_new_anytls"
-                        android:title="@string/action_anytls" />
-                    <item
-                        android:id="@+id/action_new_naive"
-                        android:title="@string/action_naive" />
-                    <item
-                        android:id="@+id/action_new_mieru"
-                        android:title="@string/action_mieru" />
-                    <item
-                        android:id="@+id/action_new_tuic5"
-                        android:title="@string/action_tuic5" />
-                    <item
-                        android:id="@+id/action_new_juicity"
-                        android:title="@string/action_juicity" />
                     <item
                         android:id="@+id/action_new_config"
                         android:title="@string/custom_config" />
@@ -71,6 +59,28 @@
                         android:title="@string/more">
                         <menu>
                             <item
+                                android:id="@+id/action_new_naive"
+                                android:title="@string/action_naive" />
+                            <item
+                                android:id="@+id/action_new_snell"
+                                android:title="@string/action_snell" />
+                            <item
+                                android:id="@+id/action_new_trusttunnel"
+                                android:title="TrustTunnel"
+                                tools:ignore="HardcodedText" />
+                            <item
+                                android:id="@+id/action_new_ssr"
+                                android:title="@string/action_shadowsocksr" />
+                            <item
+                                android:id="@+id/action_new_anytls"
+                                android:title="@string/action_anytls" />
+                            <item
+                                android:id="@+id/action_new_mieru"
+                                android:title="@string/action_mieru" />
+                            <item
+                                android:id="@+id/action_new_juicity"
+                                android:title="@string/action_juicity" />
+                            <item
                                 android:id="@+id/action_new_socks"
                                 android:title="@string/action_socks" />
                             <item
@@ -80,13 +90,6 @@
                                 android:id="@+id/action_new_http3"
                                 android:title="@string/action_http3" />
                             <item
-                                android:id="@+id/action_new_trusttunnel"
-                                android:title="TrustTunnel"
-                                tools:ignore="HardcodedText" />
-                            <item
-                                android:id="@+id/action_new_snell"
-                                android:title="@string/action_snell" />
-                            <item
                                 android:id="@+id/action_new_ssh"
                                 android:title="@string/action_ssh" />
                             <item
@@ -95,9 +98,6 @@
                             <item
                                 android:id="@+id/action_new_shadowquic"
                                 android:title="@string/action_shadowquic" />
-                            <item
-                                android:id="@+id/action_new_ssr"
-                                android:title="@string/action_shadowsocksr" />
                         </menu>
                     </item>
                 </menu>

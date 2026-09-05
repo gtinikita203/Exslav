@@ -5,10 +5,14 @@
     android:id="@+id/content"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="4dp"
+    android:layout_marginStart="4dp"
+    android:layout_marginEnd="4dp"
+    android:layout_marginTop="2dp"
+    android:layout_marginBottom="2dp"
     android:clickable="true"
     android:focusable="true"
-    app:cardElevation="2dp">
+    app:cardCornerRadius="8dp"
+    app:cardElevation="1dp">
 
     <LinearLayout
         android:id="@+id/content_lin"
@@ -27,7 +31,6 @@
             tools:visibility="visible" />
 
         <LinearLayout
-
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:nextFocusRight="@+id/edit"
@@ -46,8 +49,8 @@
                     android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:paddingStart="12dp"
-                    android:paddingTop="8dp"
-                    android:paddingBottom="8dp">
+                    android:paddingTop="5dp"
+                    android:paddingBottom="1dp">
 
                     <TextView
                         android:id="@+id/profile_name"
@@ -61,30 +64,32 @@
 
                 <androidx.appcompat.widget.AppCompatImageView
                     android:id="@+id/edit"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="top"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center_vertical"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/edit"
                     android:focusable="true"
-                    android:padding="12dp"
+                    android:padding="6dp"
                     app:srcCompat="@drawable/ic_image_edit" />
 
                 <LinearLayout
                     android:id="@+id/share"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="top"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center_vertical"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/share"
                     android:focusable="true"
+                    android:gravity="center"
                     android:nextFocusLeft="@+id/container">
 
                     <LinearLayout
                         android:id="@+id/share_layer"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:padding="12dp">
+                        android:gravity="center"
+                        android:padding="6dp">
 
                         <androidx.appcompat.widget.AppCompatImageView
                             android:id="@+id/shareIcon"
@@ -97,13 +102,14 @@
 
                 <androidx.appcompat.widget.AppCompatImageView
                     android:id="@+id/deleteIcon"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="top"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="4dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/delete"
                     android:focusable="true"
-                    android:padding="12dp"
+                    android:padding="6dp"
                     app:srcCompat="@drawable/ic_action_delete" />
 
             </LinearLayout>
@@ -114,7 +120,7 @@
                 android:orientation="horizontal"
                 android:paddingStart="12dp"
                 android:paddingEnd="8dp"
-                android:paddingBottom="4dp"
+                android:paddingBottom="2dp"
                 android:visibility="gone"
                 tools:visibility="visible">
 
@@ -126,6 +132,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:textColor="?android:attr/textColorSecondary"
                     android:textDirection="locale"
+                    android:textSize="11sp"
                     tools:text="@string/server_address" />
 
                 <TextView
@@ -136,6 +143,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:textColor="?android:attr/textColorSecondary"
                     android:textDirection="locale"
+                    android:textSize="11sp"
                     tools:text="@string/traffic" />
 
             </LinearLayout>
@@ -145,8 +153,9 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:paddingStart="12dp"
-                android:paddingEnd="8dp"
-                android:paddingBottom="12dp">
+                android:paddingEnd="10dp"
+                android:paddingTop="0dp"
+                android:paddingBottom="5dp">
 
                 <TextView
                     android:id="@+id/profile_type"
@@ -156,6 +165,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:textColor="?colorAccent"
                     android:textDirection="locale"
+                    android:textSize="12sp"
                     tools:text="Protocol" />
 
                 <TextView
@@ -166,6 +176,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:textColor="?colorAccent"
                     android:textDirection="locale"
+                    android:textSize="12sp"
                     tools:text="1 ms"
                     tools:textColor="@color/material_green_500"/>
 

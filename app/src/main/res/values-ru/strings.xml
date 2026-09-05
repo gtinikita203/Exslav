@@ -116,6 +116,9 @@
     <string name="subscription_import">Импорт подписки</string>
     <string name="subscription_traffic">%s использовано / %s осталось</string>
     <string name="subscription_used">%s использовано</string>
+    <string name="subscription_remaining_of_total">Осталось %1$s из %2$s</string>
+    <string name="connection_test_on_network_change">Автотест при смене сети</string>
+    <string name="connection_test_on_network_change_sum">Автоматически проверять задержку прокси при подключении или смене сети</string>
     <string name="subscription_update_message">Обновление %s …</string>
     <string name="subscription_update">Обновление подписки</string>
     <string name="service_subscription">Служба обновления подписки</string>

@@ -534,12 +534,11 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
                 val text = mutableListOf<String>()
                 if (subscription.bytesUsed > 0L || subscription.bytesRemaining > 0L) {
                     text.add(if (subscription.bytesRemaining > 0L) {
+                        val total = subscription.bytesUsed + subscription.bytesRemaining
                         getString(
-                            R.string.subscription_traffic, FormatFileSizeCompat.formatFileSize(
-                                context, subscription.bytesUsed, DataStore.useIECUnit
-                            ), FormatFileSizeCompat.formatFileSize(
-                                context, subscription.bytesRemaining, DataStore.useIECUnit
-                            )
+                            R.string.subscription_remaining_of_total,
+                            FormatFileSizeCompat.formatFileSize(context, subscription.bytesRemaining, DataStore.useIECUnit),
+                            FormatFileSizeCompat.formatFileSize(context, total, DataStore.useIECUnit)
                         )
                     } else {
                         getString(

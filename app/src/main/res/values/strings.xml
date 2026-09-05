@@ -185,10 +185,10 @@
     <string name="select_profile">Select profile</string>
     <string name="action_socks" translatable="false">SOCKS</string>
     <string name="action_http" translatable="false">HTTP</string>
-    <string name="action_shadowsocks" translatable="false">Shadowsocks</string>
+    <string name="action_shadowsocks" translatable="false">Shadowsocks 2022</string>
     <string name="action_shadowsocksr" translatable="false">ShadowsocksR</string>
     <string name="action_vmess" translatable="false">VMess</string>
-    <string name="action_vless" translatable="false">VLESS</string>
+    <string name="action_vless" translatable="false">VLESS REALITY</string>
     <string name="action_trojan" translatable="false">Trojan</string>
     <string name="action_naive" translatable="false">NaïveProxy</string>
     <string name="action_hysteria2" translatable="false">Hysteria 2</string>
@@ -317,6 +317,9 @@
     <string name="subscription_update_message">Updating %s …</string>
     <string name="subscription_used">%s used</string>
     <string name="subscription_traffic">%s used / %s remaining</string>
+    <string name="subscription_remaining_of_total">%1$s remaining of %2$s</string>
+    <string name="connection_test_on_network_change">Auto test on network change</string>
+    <string name="connection_test_on_network_change_sum">Automatically test proxy latencies when connecting or switching networks</string>
     <string name="subscription_import">Import subscription</string>
     <string name="subscription_import_message">Are you sure you want to import subscription %s? If the source is not trustworthy, your IP and behavior will be leaked.</string>
     <string name="profile_import">Import profile</string>

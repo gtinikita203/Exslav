@@ -40,6 +40,10 @@ import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import android.text.format.DateUtils
+import com.google.android.material.progressindicator.LinearProgressIndicator
+import io.nekohasekai.sagernet.utils.DefaultNetworkListener
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -135,6 +139,40 @@ class ConfigurationFragment @JvmOverloads constructor(
                 .detach(this)
                 .attach(this)
                 .commit()
+        }
+    }
+
+    private var lastNetwork: android.net.Network? = null
+    private var autoTestJob: Job? = null
+
+    override fun onStart() {
+        super.onStart()
+        if (DataStore.connectionTestOnNetworkChange) {
+            lifecycleScope.launch {
+                DefaultNetworkListener.start(this@ConfigurationFragment) { net ->
+                    if (net != null && lastNetwork != null && net != lastNetwork) {
+                        autoTestJob?.cancel()
+                        autoTestJob = lifecycleScope.launch {
+                            delay(1500)
+                            if (isActive && !isTesting) {
+                                urlTest(silent = true)
+                            }
+                        }
+                    }
+                    if (net != null) {
+                        lastNetwork = net
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        autoTestJob?.cancel()
+        autoTestJob = null
+        lifecycleScope.launch {
+            DefaultNetworkListener.stop(this@ConfigurationFragment)
         }
     }
 
@@ -850,97 +888,107 @@ class ConfigurationFragment @JvmOverloads constructor(
         }
     }
 
+    var isTesting = false
+
     @Suppress("EXPERIMENTAL_API_USAGE")
-    fun urlTest() {
-        val test = TestDialog()
-        val dialog = test.builder.show()
-        dialog.getButton(DialogInterface.BUTTON_NEUTRAL).isEnabled = false
+    fun urlTest(silent: Boolean = false) {
+        if (isTesting) return
+        isTesting = true
+
+        val test = if (!silent) TestDialog() else null
+        val dialog = test?.builder?.show()
+        dialog?.getButton(DialogInterface.BUTTON_NEUTRAL)?.isEnabled = false
         val testJobs = mutableListOf<Job>()
 
         val mainJob = runOnDefaultDispatcher {
-            val group = DataStore.currentGroup()
-            var profilesUnfiltered = SagerDatabase.proxyDao.getByGroup(group.id)
-            profilesUnfiltered = profilesUnfiltered.filter {
-                !it.useBrowserForwarder()
-            }
-            val profiles = ConcurrentLinkedQueue(profilesUnfiltered)
+            try {
+                val group = DataStore.currentGroup()
+                var profilesUnfiltered = SagerDatabase.proxyDao.getByGroup(group.id)
+                profilesUnfiltered = profilesUnfiltered.filter {
+                    !it.useBrowserForwarder()
+                }
+                val profiles = ConcurrentLinkedQueue(profilesUnfiltered)
 
-            val profileCount = profilesUnfiltered.size
-            var finishedProfileCount = 0
-            //stopService()
+                val profileCount = profilesUnfiltered.size
+                var finishedProfileCount = 0
 
-            val link = DataStore.connectionTestURL
-            val timeout = 5000
+                val link = DataStore.connectionTestURL
+                val timeout = 5000
 
-            val hashLocks = java.util.concurrent.ConcurrentHashMap<String, kotlinx.coroutines.sync.Mutex>()
-            val wdttTests = java.util.concurrent.ConcurrentHashMap<String, Deferred<ProxyEntity>>()
+                val hashLocks = java.util.concurrent.ConcurrentHashMap<String, kotlinx.coroutines.sync.Mutex>()
+                val wdttTests = java.util.concurrent.ConcurrentHashMap<String, Deferred<ProxyEntity>>()
 
-            repeat(6) {
-                testJobs.add(launch {
-                    while (isActive) {
-                        val profile = profiles.poll() ?: break
-                        profile.status = 0
-                        test.insert(profile)
+                repeat(6) {
+                    testJobs.add(launch {
+                        while (isActive) {
+                            val profile = profiles.poll() ?: break
+                            profile.status = 0
+                            test?.insert(profile)
 
-                        val key = profile.wdttKey()
-                        if (key != null) {
-                            val deferred = wdttTests.getOrPut(key) {
-                                async {
-                                    val uniqueHashes = profile.wdttBean?.vkHashes?.split(Regex("[,\\s\\n]+"))
-                                        ?.filter { it.isNotBlank() }?.distinct()?.sorted() ?: emptyList()
-                                    val acquiredLocks = mutableListOf<kotlinx.coroutines.sync.Mutex>()
-                                    for (hash in uniqueHashes) {
-                                        val lock = hashLocks.getOrPut(hash) { kotlinx.coroutines.sync.Mutex() }
-                                        lock.lock()
-                                        acquiredLocks.add(lock)
-                                    }
-                                    try {
-                                        runTestForProfile(profile, link, timeout)
-                                    } finally {
-                                        for (lock in acquiredLocks.reversed()) {
-                                            lock.unlock()
+                            val key = profile.wdttKey()
+                            if (key != null) {
+                                val deferred = wdttTests.getOrPut(key) {
+                                    async {
+                                        val uniqueHashes = profile.wdttBean?.vkHashes?.split(Regex("[,\\s\\n]+"))
+                                            ?.filter { it.isNotBlank() }?.distinct()?.sorted() ?: emptyList()
+                                        val acquiredLocks = mutableListOf<kotlinx.coroutines.sync.Mutex>()
+                                        for (hash in uniqueHashes) {
+                                            val lock = hashLocks.getOrPut(hash) { kotlinx.coroutines.sync.Mutex() }
+                                            lock.lock()
+                                            acquiredLocks.add(lock)
                                         }
+                                        try {
+                                            runTestForProfile(profile, link, timeout)
+                                        } finally {
+                                            for (lock in acquiredLocks.reversed()) {
+                                                lock.unlock()
+                                            }
+                                        }
+                                        profile
                                     }
-                                    profile
                                 }
+                                val resultProfile = deferred.await()
+                                if (resultProfile.id != profile.id) {
+                                    profile.status = resultProfile.status
+                                    profile.ping = resultProfile.ping
+                                    profile.error = resultProfile.error
+                                }
+                            } else {
+                                runTestForProfile(profile, link, timeout)
                             }
-                            val resultProfile = deferred.await()
-                            if (resultProfile.id != profile.id) {
-                                profile.status = resultProfile.status
-                                profile.ping = resultProfile.ping
-                                profile.error = resultProfile.error
-                            }
-                        } else {
-                            runTestForProfile(profile, link, timeout)
-                        }
 
-                        onMainDispatcher {
-                            finishedProfileCount++
-                            test.binding.progressCircular.apply {
-                                isVisible = true
-                                setProgressCompat(
-                                    ((finishedProfileCount.toDouble() / profileCount.toDouble()) * 100).toInt(),
-                                    true
-                                )
+                            if (test != null && dialog != null) {
+                                onMainDispatcher {
+                                    finishedProfileCount++
+                                    test.binding.progressCircular.apply {
+                                        isVisible = true
+                                        setProgressCompat(
+                                            ((finishedProfileCount.toDouble() / profileCount.toDouble()) * 100).toInt(),
+                                            true
+                                        )
+                                    }
+                                    dialog.getButton(DialogInterface.BUTTON_NEUTRAL).text = "$finishedProfileCount/$profileCount"
+                                }
+                                test.update(profile)
                             }
-                            // TODO: fix l10n
-                            dialog.getButton(DialogInterface.BUTTON_NEUTRAL).text = "$finishedProfileCount/$profileCount"
+                            ProfileManager.updateProfile(profile)
                         }
+                    })
+                }
 
-                        test.update(profile)
-                        ProfileManager.updateProfile(profile)
+                testJobs.joinAll()
+                test?.close()
+                if (test != null && dialog != null) {
+                    onMainDispatcher {
+                        test.binding.progressCircular.isGone = true
+                        dialog.getButton(DialogInterface.BUTTON_NEGATIVE).setText(android.R.string.ok)
                     }
-                })
-            }
-
-            testJobs.joinAll()
-            test.close()
-            onMainDispatcher {
-                test.binding.progressCircular.isGone = true
-                dialog.getButton(DialogInterface.BUTTON_NEGATIVE).setText(android.R.string.ok)
+                }
+            } finally {
+                isTesting = false
             }
         }
-        test.cancel = {
+        test?.cancel = {
             mainJob.cancel()
             runOnDefaultDispatcher {
                 GroupManager.postReload(DataStore.currentGroupId())
@@ -1103,6 +1151,58 @@ class ConfigurationFragment @JvmOverloads constructor(
         lateinit var undoManager: UndoSnackbarManager<ProxyEntity>
         lateinit var adapter: ConfigurationAdapter
 
+        var subscriptionCard: View? = null
+        var subTrafficText: TextView? = null
+        var subExpireText: TextView? = null
+        var subProgress: LinearProgressIndicator? = null
+
+        fun updateSubscriptionCard() {
+            val card = subscriptionCard ?: return
+            if (!::proxyGroup.isInitialized || proxyGroup.type != GroupType.SUBSCRIPTION || proxyGroup.subscription == null) {
+                card.isGone = true
+                return
+            }
+            val sub = proxyGroup.subscription!!
+            val hasTraffic = sub.bytesUsed > 0L || sub.bytesRemaining > 0L
+            val hasExpire = sub.expiryDate > 0L
+
+            if (!hasTraffic && !hasExpire) {
+                card.isGone = true
+                return
+            }
+            card.isVisible = true
+
+            if (hasTraffic) {
+                subTrafficText?.isVisible = true
+                if (sub.bytesRemaining > 0L) {
+                    val total = sub.bytesUsed + sub.bytesRemaining
+                    val remainingStr = FormatFileSizeCompat.formatFileSize(requireContext(), sub.bytesRemaining, DataStore.useIECUnit)
+                    val totalStr = FormatFileSizeCompat.formatFileSize(requireContext(), total, DataStore.useIECUnit)
+                    subTrafficText?.text = getString(R.string.subscription_remaining_of_total, remainingStr, totalStr)
+                    subProgress?.apply {
+                        isVisible = true
+                        val pct = ((sub.bytesUsed.toDouble() / total.toDouble()) * 100).toInt().coerceIn(0, 100)
+                        setProgressCompat(pct, false)
+                    }
+                } else {
+                    val usedStr = FormatFileSizeCompat.formatFileSize(requireContext(), sub.bytesUsed, DataStore.useIECUnit)
+                    subTrafficText?.text = getString(R.string.subscription_used, usedStr)
+                    subProgress?.isGone = true
+                }
+            } else {
+                subTrafficText?.isGone = true
+                subProgress?.isGone = true
+            }
+
+            if (hasExpire) {
+                subExpireText?.isVisible = true
+                val expireTime = DateUtils.getRelativeTimeSpanString(requireContext(), sub.expiryDate * 1000)
+                subExpireText?.text = getString(R.string.subscription_expire, expireTime)
+            } else {
+                subExpireText?.isGone = true
+            }
+        }
+
         override fun onSaveInstanceState(outState: Bundle) {
             super.onSaveInstanceState(outState)
 
@@ -1156,6 +1256,7 @@ class ConfigurationFragment @JvmOverloads constructor(
             } else {
                 onViewCreated(requireView(), null)
             }
+            updateSubscriptionCard()
             checkOrderMenu()
 
             if (showBackup) {
@@ -1216,6 +1317,17 @@ class ConfigurationFragment @JvmOverloads constructor(
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             val parent = parent ?: return
             if (!::proxyGroup.isInitialized) return
+
+            subscriptionCard = view.findViewById(R.id.subscription_card)
+            subTrafficText = view.findViewById(R.id.sub_traffic_text)
+            subExpireText = view.findViewById(R.id.sub_expire_text)
+            subProgress = view.findViewById(R.id.sub_progress)
+            subscriptionCard?.setOnClickListener {
+                if (proxyGroup.type == GroupType.SUBSCRIPTION) {
+                    GroupUpdater.startUpdate(proxyGroup, true)
+                }
+            }
+            updateSubscriptionCard()
 
             configurationListView = view.findViewById(R.id.configuration_list)
             ViewCompat.setOnApplyWindowInsetsListener(configurationListView) { v, insets ->
@@ -1517,12 +1629,14 @@ class ConfigurationFragment @JvmOverloads constructor(
                 if (group.id != proxyGroup.id) return
                 proxyGroup = group
                 reloadProfiles()
+                onMainDispatcher { updateSubscriptionCard() }
             }
 
             override suspend fun groupUpdated(groupId: Long) {
                 if (groupId != proxyGroup.id) return
                 proxyGroup = SagerDatabase.groupDao.getById(groupId)!!
                 reloadProfiles()
+                onMainDispatcher { updateSubscriptionCard() }
             }
 
             fun reloadProfiles() {

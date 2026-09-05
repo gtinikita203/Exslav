@@ -86,6 +86,7 @@ object Key {
     const val TRANSPROXY_PORT = "transproxyPort"
 
     const val CONNECTION_TEST_URL = "connectionTestURL"
+    const val CONNECTION_TEST_ON_NETWORK_CHANGE = "connectionTestOnNetworkChange"
     const val PROBE_URL = "probeUrl"
     const val PROBE_INTERVAL = "probeInterval"
 

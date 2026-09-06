@@ -663,8 +663,13 @@ class ConfigurationFragment @JvmOverloads constructor(
                 cancel()
             }
             .setNeutralButton(" ", null)
+            .setPositiveButton(R.string.auto_select) { _, _ ->
+                close()
+                autoSelect()
+            }
             .setCancelable(false)
         lateinit var cancel: () -> Unit
+        lateinit var autoSelect: () -> Unit
         val results = ArrayList<ProxyEntity>()
         val adapter = TestAdapter()
         val scrollTimer = Timer("insert timer")
@@ -828,15 +833,19 @@ class ConfigurationFragment @JvmOverloads constructor(
         if (isTesting) return
         isTesting = true
 
+        val allProfiles = Collections.synchronizedList(ArrayList<ProxyEntity>())
         val test = if (!silent) TestDialog() else null
         val dialog = test?.builder?.show()
         dialog?.getButton(DialogInterface.BUTTON_NEUTRAL)?.isEnabled = false
+        dialog?.getButton(DialogInterface.BUTTON_POSITIVE)?.isEnabled = false
         val testJobs = mutableListOf<Job>()
 
         val mainJob = runOnDefaultDispatcher {
             try {
                 val group = DataStore.currentGroup()
-                if (DataStore.updateSubscriptionBeforeTest && group.type == GroupType.SUBSCRIPTION) {
+                val lastUpdated = group.subscription?.lastUpdated ?: 0L
+                val shouldUpdateSubscription = lastUpdated <= 0L || (System.currentTimeMillis() / 1000 - lastUpdated) >= 15 * 60
+                if (DataStore.updateSubscriptionBeforeTest && group.type == GroupType.SUBSCRIPTION && shouldUpdateSubscription) {
                     if (dialog != null) {
                         onMainDispatcher {
                             dialog.getButton(DialogInterface.BUTTON_NEUTRAL).text = getString(R.string.subscription_update)
@@ -854,10 +863,18 @@ class ConfigurationFragment @JvmOverloads constructor(
                 profilesUnfiltered = profilesUnfiltered.filter {
                     !it.useBrowserForwarder()
                 }
+                allProfiles.clear()
+                allProfiles.addAll(profilesUnfiltered)
                 val profiles = ConcurrentLinkedQueue(profilesUnfiltered)
 
                 val profileCount = profilesUnfiltered.size
                 var finishedProfileCount = 0
+
+                if (dialog != null) {
+                    onMainDispatcher {
+                        dialog.getButton(DialogInterface.BUTTON_NEUTRAL).text = "$finishedProfileCount/$profileCount"
+                    }
+                }
 
                 val link = DataStore.connectionTestURL
                 val timeout = 5000
@@ -915,6 +932,9 @@ class ConfigurationFragment @JvmOverloads constructor(
                                         )
                                     }
                                     dialog.getButton(DialogInterface.BUTTON_NEUTRAL).text = "$finishedProfileCount/$profileCount"
+                                    if (profile.status == 1 && profile.ping > 0) {
+                                        dialog.getButton(DialogInterface.BUTTON_POSITIVE).isEnabled = true
+                                    }
                                 }
                                 test.update(profile)
                             }
@@ -929,6 +949,10 @@ class ConfigurationFragment @JvmOverloads constructor(
                     onMainDispatcher {
                         test.binding.progressCircular.isGone = true
                         dialog.getButton(DialogInterface.BUTTON_NEGATIVE).setText(android.R.string.ok)
+                        val hasAvailable = synchronized(allProfiles) {
+                            allProfiles.any { it.status == 1 && it.ping > 0 }
+                        }
+                        dialog.getButton(DialogInterface.BUTTON_POSITIVE).isEnabled = hasAvailable
                     }
                 }
             } finally {
@@ -937,8 +961,61 @@ class ConfigurationFragment @JvmOverloads constructor(
         }
         test?.cancel = {
             mainJob.cancel()
+            testJobs.forEach { it.cancel() }
             runOnDefaultDispatcher {
                 GroupManager.postReload(DataStore.currentGroupId())
+            }
+        }
+        test?.autoSelect = {
+            mainJob.cancel()
+            testJobs.forEach { it.cancel() }
+            runOnDefaultDispatcher {
+                val currentGroupId = DataStore.currentGroupId()
+                val candidates = synchronized(allProfiles) { ArrayList(allProfiles) }
+                val available = candidates.filter { it.status == 1 && it.ping > 0 }
+                if (available.isEmpty()) {
+                    onMainDispatcher {
+                        if (isAdded) {
+                            snackbar(R.string.no_available_servers).show()
+                        }
+                    }
+                    GroupManager.postReload(currentGroupId)
+                    return@runOnDefaultDispatcher
+                }
+
+                val nonWdttAvailable = available.filter { it.type != ProxyEntity.TYPE_WDTT }
+                val best = if (nonWdttAvailable.isNotEmpty()) {
+                    nonWdttAvailable.minByOrNull { it.ping }!!
+                } else {
+                    available.minByOrNull { it.ping }!!
+                }
+
+                if (select) {
+                    onMainDispatcher {
+                        if (isAdded) {
+                            (activity as? SelectCallback)?.returnProfile(best.id)
+                        }
+                    }
+                } else {
+                    val changed = DataStore.selectedProxy != best.id
+                    DataStore.selectedProxy = best.id
+
+                    GroupManager.postReload(currentGroupId)
+
+                    onMainDispatcher {
+                        if (isAdded) {
+                            adapter.groupFragments.values.forEach { it.adapter?.refreshSelection() }
+                            snackbar(getString(R.string.selected_server, best.displayName())).show()
+                        }
+                    }
+
+                    if (changed) {
+                        val pa = activity as? MainActivity
+                        if (pa?.state?.canStop == true) {
+                            SagerNet.reloadService()
+                        }
+                    }
+                }
             }
         }
     }

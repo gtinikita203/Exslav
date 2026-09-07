@@ -127,7 +127,7 @@ class ProxyInstance(profile: ProxyEntity, val service: BaseService.Interface) : 
 
             if (profile != null) {
                 val newStatus = if (status.alive) 1 else 3
-                val newDelay = status.delay.toInt()
+                val newDelay = if (status.alive) status.delay.toInt().coerceAtLeast(1) else 0
                 val newErrorReason = status.lastErrorReason
 
                 if (profile.status != newStatus || profile.ping != newDelay || profile.error != newErrorReason) {

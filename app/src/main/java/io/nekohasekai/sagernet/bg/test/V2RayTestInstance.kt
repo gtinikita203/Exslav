@@ -38,6 +38,7 @@ import kotlin.coroutines.suspendCoroutine
 class V2RayTestInstance(profile: ProxyEntity, val link: String, val timeout: Int, val protectPath: String = "") : V2RayInstance(
     profile,
 ), LocalResolver {
+    override val isTestInstance: Boolean get() = true
     lateinit var continuation: Continuation<Int>
     suspend fun doTest(): Int {
         return suspendCoroutine { c ->

@@ -51,6 +51,8 @@ abstract class V2RayInstance(
     var profile: ProxyEntity,
 ) : AbstractInstance {
 
+    open val isTestInstance: Boolean get() = false
+
     lateinit var config: V2rayBuildResult
     lateinit var v2rayPoint: V2RayInstance
     private lateinit var wsForwarder: WebView
@@ -116,7 +118,7 @@ abstract class V2RayInstance(
     override fun launch() {
         val context = SagerNet.application
 
-        if (WdttRawTunState.active) {
+        if (!isTestInstance && WdttRawTunState.active) {
             // Raw-режим WDTT: v2ray-ядро НЕ запускаем — весь трафик идёт через
             // go_client напрямую (TUN fd передан в VpnService.startVpn()).
             // Фейковый WG-bean нужен только для профиля; реальный WG-handshake
@@ -243,7 +245,7 @@ abstract class V2RayInstance(
             Log.i("WDTT", "wdtt process destroyed")
         }
 
-        if (WdttRawTunState.active) {
+        if (!isTestInstance && WdttRawTunState.active) {
             Log.i("WDTT", "Clearing raw TUN state on close")
             WdttRawTunState.clear()
         }
@@ -406,8 +408,10 @@ Log.i("WDTT", "Got RAW config:\n$rawConfig")
             // TUN fd передаётся ТОЛЬКО один раз, когда VpnService.build() его создал.
             // Здесь больше НЕ ждём VpnService.instance.conn — это была гонка:
             // v2ray-core (fake WG) закрывал conn раньше, чем мы успевали забрать fd.
-            WdttRawTunState.set(ip.ifBlank { "10.70.0.2" }, mtu, dns, rawSockName)
-            Log.i("WDTT", "Registered raw TUN state: ip=${WdttRawTunState.ip} mtu=${WdttRawTunState.mtu} dns=${WdttRawTunState.dns} sock=$rawSockName")
+            if (!isTestInstance) {
+                WdttRawTunState.set(ip.ifBlank { "10.70.0.2" }, mtu, dns, rawSockName)
+                Log.i("WDTT", "Registered raw TUN state: ip=${WdttRawTunState.ip} mtu=${WdttRawTunState.mtu} dns=${WdttRawTunState.dns} sock=$rawSockName")
+            }
 
             // Возвращаем фейковый WG bean для удовлетворения контракта Exslav
             return WireGuardBean().apply {
@@ -460,7 +464,7 @@ Log.i("WDTT", "Got RAW config:\n$rawConfig")
                     Log.i("WDTT-GoStderr", l)
                     stderrLog.append(l).append("\n")
 
-                    if (l.contains("[СТАТИСТИКА]")) {
+                    if (!isTestInstance && l.contains("[СТАТИСТИКА]")) {
                         WdttRawTunState.updateFromStats(l)
                     }
 

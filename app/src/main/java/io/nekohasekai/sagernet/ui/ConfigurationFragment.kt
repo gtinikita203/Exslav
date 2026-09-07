@@ -750,7 +750,8 @@ class ConfigurationFragment @JvmOverloads constructor(
                         binding.profileStatus.setTextColor(requireContext().getColorAttr(android.R.attr.textColorSecondary))
                     }
                     1 -> {
-                        binding.profileStatus.text = getString(R.string.available, profile.ping)
+                        val pingMs = if (profile.ping > 0) profile.ping else 1
+                        binding.profileStatus.text = getString(R.string.available, pingMs)
                         binding.profileStatus.setTextColor(requireContext().getColour(R.color.material_green_500))
                     }
                     2 -> {
@@ -1827,7 +1828,8 @@ class ConfigurationFragment @JvmOverloads constructor(
                         profileStatus.text = ""
                     }
                 } else if (proxyEntity.status == 1) {
-                    profileStatus.text = getString(R.string.available, proxyEntity.ping)
+                    val pingMs = if (proxyEntity.ping > 0) proxyEntity.ping else 1
+                    profileStatus.text = getString(R.string.available, pingMs)
                     profileStatus.setTextColor(requireContext().getColour(R.color.material_green_500))
                 } else {
                     profileStatus.setTextColor(requireContext().getColour(R.color.material_red_500))

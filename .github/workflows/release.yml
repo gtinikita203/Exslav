@@ -51,12 +51,26 @@ jobs:
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r29
+      - name: Core Lib Cache
+        id: cache-core-lib
+        uses: actions/cache@v6
+        with:
+          path: app/libs
+          key: core-lib-release-${{ hashFiles('library/core/**', 'bin/lib/core/**', 'run') }}
       - name: Native Build
+        if: steps.cache-core-lib.outputs.cache-hit != 'true'
         env:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
           ./run lib core
+      - name: WDTT Native Libs Cache
+        id: cache-wdtt-libs
+        uses: actions/cache@v6
+        with:
+          path: app/src/main/jniLibs
+          key: wdtt-libs-${{ hashFiles('wdtt/**') }}
       - name: Build wdtt native libs
+        if: steps.cache-wdtt-libs.outputs.cache-hit != 'true'
         env:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |

@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PenikVPN — быстрый, невидимый и свободный VPN без блокировок</title>
+<meta name="description" content="PenikVPN — мощный клиент обхода блокировок на базе VLESS Reality, WireGuard, ShadowTLS и sing-box. Полная защита от ТСПУ и DPI, 0 логов, Split Tunneling для банков и Госуслуг, максимальная скорость без ограничений.">
+<style>
+:root{
+  --bg:#06080d;
+  --bg2:#0a0e16;
+  --card:rgba(255,255,255,.035);
+  --border:rgba(255,255,255,.09);
+  --text:#e9edf4;
+  --muted:#8b94a7;
+  --acc:#34d399;
+  --acc2:#22d3ee;
+  --grad:linear-gradient(135deg,#34d399,#22d3ee);
+  --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.55;
+  overflow-x:hidden;
+}
+::selection{background:rgba(52,211,153,.35)}
+img{display:block}
+a{color:inherit;text-decoration:none}
+.container{max-width:1180px;margin:0 auto;padding:0 24px}
+section{scroll-margin-top:90px}
+
+/* ---------- NAV ---------- */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;transition:.3s;border-bottom:1px solid transparent}
+nav.scrolled{background:rgba(6,8,13,.85);backdrop-filter:blur(14px);border-bottom-color:var(--border)}
+.nav-inner{display:flex;align-items:center;gap:28px;height:70px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:19px;letter-spacing:-.3px}
+.brand-icon{
+  width:32px;height:32px;border-radius:10px;background:rgba(52,211,153,.1);
+  border:1px solid rgba(52,211,153,.35);display:flex;align-items:center;justify-content:center;
+  color:var(--acc);font-size:16px;box-shadow:0 0 15px rgba(52,211,153,.2)
+}
+.brand em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.nav-links{display:flex;gap:26px;margin-left:14px}
+.nav-links a{color:var(--muted);font-size:14.5px;font-weight:600;transition:.2s}
+.nav-links a:hover{color:var(--acc)}
+.nav-cta{margin-left:auto;display:flex;gap:10px}
+.burger{display:none;margin-left:auto;background:none;border:1px solid var(--border);border-radius:10px;width:42px;height:42px;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer}
+.burger span{display:block;width:18px;height:2px;background:var(--text);border-radius:2px;transition:.3s}
+body.menu-open .burger span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+body.menu-open .burger span:nth-child(2){opacity:0}
+body.menu-open .burger span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+/* ---------- BUTTONS ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:11px 20px;border-radius:12px;font-weight:700;font-size:14.5px;font-family:inherit;transition:.25s;cursor:pointer;border:1px solid transparent;white-space:nowrap}
+.btn-primary{background:var(--grad);color:#04121b;box-shadow:0 8px 26px -8px rgba(52,211,153,.55)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 34px -8px rgba(34,211,238,.6)}
+.btn-outline{border-color:var(--border);color:var(--text);background:rgba(255,255,255,.03)}
+.btn-outline:hover{border-color:rgba(52,211,153,.55);background:rgba(52,211,153,.07);transform:translateY(-2px)}
+.btn-lg{padding:15px 28px;font-size:16px;border-radius:14px}
+.btn-sm{padding:9px 16px;font-size:13.5px}
+
+/* ---------- HERO ---------- */
+.hero{position:relative;padding:160px 0 90px;overflow:hidden}
+.hero-bg{position:absolute;inset:0;pointer-events:none;background:
+  radial-gradient(640px 420px at 82% 8%,rgba(34,211,238,.14),transparent 62%),
+  radial-gradient(560px 420px at 8% 92%,rgba(52,211,153,.12),transparent 62%)}
+.hero-bg::before{content:'';position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:46px 46px;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 0%,black 20%,transparent 75%);
+  mask-image:radial-gradient(ellipse at 50% 0%,black 20%,transparent 75%)}
+.hero-grid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+.badge{display:inline-flex;align-items:center;gap:8px;font:600 12.5px var(--mono);color:var(--acc);background:rgba(52,211,153,.09);border:1px solid rgba(52,211,153,.28);padding:8px 15px;border-radius:99px;margin-bottom:22px}
+.badge .pulse{width:7px;height:7px;border-radius:50%;background:var(--acc);animation:pulse 1.8s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.6)}50%{box-shadow:0 0 0 6px rgba(52,211,153,0)}}
+h1{font-size:clamp(38px,5.4vw,62px);font-weight:800;line-height:1.06;letter-spacing:-1.5px;margin-bottom:22px}
+.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-text p{color:var(--muted);font-size:17.5px;max-width:520px;margin-bottom:32px}
+.hero-text p b{color:var(--text)}
+.hero-btns{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+.hero-meta{font:500 13px var(--mono);color:var(--muted)}
+
+/* ---------- PHONE MOCKUP (VPN UI) ---------- */
+.hero-demo{position:relative;display:flex;justify-content:center}
+.phone{width:296px;aspect-ratio:9/18.6;background:#0c111e;border-radius:46px;border:1px solid rgba(255,255,255,.14);padding:10px;
+  box-shadow:0 50px 90px -24px rgba(0,0,0,.75),0 0 0 7px rgba(255,255,255,.028),0 0 90px -20px rgba(34,211,238,.28);
+  animation:phoneFloat 7s ease-in-out infinite}
+@keyframes phoneFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.phone-notch{position:absolute;top:20px;left:50%;transform:translateX(-50%);width:96px;height:22px;background:#0c111e;border-radius:12px;z-index:3}
+.screen{background:#0d0d14;border-radius:37px;height:100%;display:flex;flex-direction:column;overflow:hidden;position:relative;padding:36px 16px 16px}
+
+/* VPN Screen Elements */
+.vpn-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.vpn-title{font-weight:800;font-size:15px;color:var(--text);display:flex;align-items:center;gap:6px}
+.vpn-status-chip{font:700 10.5px var(--mono);color:var(--acc);background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);padding:4px 9px;border-radius:99px;display:flex;align-items:center;gap:5px}
+.vpn-status-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--acc);animation:pulse 1.8s infinite}
+
+.vpn-btn-box{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;margin:10px 0}
+.vpn-pulse-ring{position:absolute;width:154px;height:154px;border-radius:50%;border:1px solid rgba(52,211,153,.25);animation:ringWave 2.8s ease-out infinite}
+.vpn-pulse-ring:nth-child(2){animation-delay:1.1s}
+@keyframes ringWave{0%{transform:scale(.75);opacity:1}100%{transform:scale(1.45);opacity:0}}
+
+.vpn-main-btn{
+  width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,#12252a,#0f3a38);
+  border:2px solid var(--acc);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 0 35px rgba(52,211,153,.35),inset 0 0 20px rgba(52,211,153,.2);
+  cursor:pointer;position:relative;z-index:2;transition:.3s;
+}
+.vpn-main-btn:hover{transform:scale(1.04);box-shadow:0 0 45px rgba(34,211,238,.5)}
+.vpn-btn-icon{font-size:32px;color:var(--acc);margin-bottom:3px;filter:drop-shadow(0 0 8px rgba(52,211,153,.7))}
+.vpn-btn-label{font:800 11px var(--mono);letter-spacing:1px;color:#ffffff}
+.vpn-btn-sub{font:600 9px var(--mono);color:var(--acc)}
+
+.vpn-server-card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;
+  padding:11px 14px;margin-bottom:12px;display:flex;align-items:center;gap:11px;
+}
+.vpn-flag{font-size:20px}
+.vpn-server-info{flex:1}
+.vpn-server-info b{display:block;font-size:12.5px;color:var(--text);line-height:1.2}
+.vpn-server-info span{font:500 10px var(--mono);color:var(--muted)}
+.vpn-ping{font:700 11px var(--mono);color:var(--acc);display:flex;align-items:center;gap:4px}
+
+.vpn-metrics{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:9px 12px;
+}
+.vpn-metric-item span{display:block;font:500 9.5px var(--mono);color:var(--muted)}
+.vpn-metric-item b{font:700 13px var(--mono);color:var(--acc2)}
+.vpn-metric-item:last-child b{color:var(--acc)}
+
+.chip{position:absolute;font:600 12px var(--mono);background:rgba(10,15,26,.92);border:1px solid var(--border);backdrop-filter:blur(8px);padding:9px 14px;border-radius:12px;box-shadow:0 14px 30px -12px rgba(0,0,0,.7);animation:chipFloat 5.5s ease-in-out infinite;z-index:4}
+.chip1{top:8%;left:-10%;animation-delay:.4s;border-color:rgba(52,211,153,.4)}
+.chip2{bottom:22%;right:-14%;animation-delay:1.3s;border-color:rgba(34,211,238,.4)}
+.chip3{top:42%;right:-18%;animation-delay:2.2s;border-color:rgba(167,139,250,.4)}
+@keyframes chipFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+/* ---------- STATS ---------- */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px}
+.stat{padding:24px 18px;border-radius:18px;background:var(--card);border:1px solid var(--border);text-align:center;transition:.25s}
+.stat:hover{border-color:rgba(52,211,153,.4);transform:translateY(-3px)}
+.stat b{display:block;font-size:34px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px}
+.stat span{font-size:12.5px;color:var(--muted)}
+
+/* ---------- MARQUEE ---------- */
+.marquee{overflow:hidden;border-block:1px solid var(--border);background:rgba(255,255,255,.018);margin-top:80px}
+.marquee-track{display:flex;gap:44px;width:max-content;animation:mqScroll 30s linear infinite;padding:15px 0}
+.marquee-track span{font:600 13px var(--mono);color:var(--muted);letter-spacing:1.5px;white-space:nowrap}
+.marquee-track span i{font-style:normal;color:var(--acc);margin-right:44px}
+@keyframes mqScroll{to{transform:translateX(-50%)}}
+
+/* ---------- SECTIONS ---------- */
+.section{padding:100px 0}
+.sec-head{max-width:660px;margin:0 auto 54px;text-align:center}
+.tag{display:inline-block;font:600 11.5px var(--mono);letter-spacing:2.5px;text-transform:uppercase;color:var(--acc);background:rgba(52,211,153,.09);border:1px solid rgba(52,211,153,.28);padding:7px 15px;border-radius:99px;margin-bottom:18px}
+h2{font-size:clamp(28px,4vw,42px);font-weight:800;letter-spacing:-.8px;line-height:1.15;margin-bottom:14px}
+.sec-head p{color:var(--muted);font-size:16.5px}
+
+/* ---------- FEATURES ---------- */
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.feat{padding:30px 26px;border-radius:20px;background:var(--card);border:1px solid var(--border);transition:.3s;position:relative;overflow:hidden}
+.feat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--grad);opacity:0;transition:.3s}
+.feat:hover{transform:translateY(-5px);border-color:rgba(52,211,153,.4);background:rgba(255,255,255,.05)}
+.feat:hover::before{opacity:1}
+.feat .ico{font-size:30px;margin-bottom:16px;display:inline-block}
+.feat h3{font-size:18px;font-weight:700;margin-bottom:10px;letter-spacing:-.3px}
+.feat p{color:var(--muted);font-size:14.5px;margin-bottom:16px}
+.feat-tags{display:flex;flex-wrap:wrap;gap:7px}
+.feat-tags span{font:600 11px var(--mono);color:var(--acc2);background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.22);padding:4px 10px;border-radius:7px}
+
+/* ---------- SECURITY / HOW IT WORKS ---------- */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.step{padding:30px 26px;border-radius:20px;background:var(--card);border:1px solid var(--border);position:relative}
+.step-num{font:700 13px var(--mono);color:var(--acc);letter-spacing:3px;display:block;margin-bottom:14px}
+.step h3{font-size:17.5px;font-weight:700;margin-bottom:10px}
+.step p{color:var(--muted);font-size:14.5px}
+.step code{font:600 12.5px var(--mono);color:var(--acc2);background:rgba(34,211,238,.08);padding:2px 7px;border-radius:6px}
+
+.server-panel{margin-top:44px;border-radius:18px;border:1px solid var(--border);background:#070a12;overflow:hidden;box-shadow:0 34px 70px -34px rgba(0,0,0,.85)}
+.term-head{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border);font:600 12.5px var(--mono);color:var(--muted);background:rgba(255,255,255,.02)}
+.tdot{width:11px;height:11px;border-radius:50%}
+.tdot.r{background:#f87171}.tdot.y{background:#fbbf24}.tdot.g{background:#34d399}
+.term-title{margin-left:8px}
+.term-body{padding:16px 18px;height:245px;overflow:hidden;font:400 12px/2 var(--mono)}
+.tline{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:tFade .35s both}
+@keyframes tFade{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.term-caption{padding:13px 18px;border-top:1px solid var(--border);color:var(--muted);font-size:13.5px;text-align:center}
+.term-caption b{color:var(--acc)}
+
+/* ---------- COMPARE TABLE ---------- */
+.table-wrap{overflow-x:auto;border-radius:20px;border:1px solid var(--border);background:var(--card)}
+.cmp-table{width:100%;border-collapse:collapse;min-width:640px}
+.cmp-table th,.cmp-table td{padding:16px 18px;text-align:center;border-bottom:1px solid var(--border);font-size:14.5px}
+.cmp-table tr:last-child td{border-bottom:none}
+.cmp-table th{font-size:15px;font-weight:800;padding-top:22px}
+.cmp-table td:first-child,.cmp-table th:first-child{text-align:left;color:var(--muted);font-weight:600}
+.cmp-table th:first-child{color:var(--muted);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:1.5px}
+.penik-col{background:rgba(52,211,153,.07);border-left:1px solid rgba(52,211,153,.25);border-right:1px solid rgba(52,211,153,.25)}
+th.penik-col{color:var(--acc)!important}
+.yes{color:var(--acc);font-weight:700}
+.no{color:#f87171;font-weight:700}
+.meh{color:#fbbf24;font-weight:600;font-size:13px}
+.cmp-note{text-align:center;color:var(--muted);font-size:13px;margin-top:16px;font-family:var(--mono)}
+
+/* ---------- DOWNLOAD ---------- */
+.dl-wrap{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:900px;margin:0 auto}
+.dl-card{padding:42px 34px;border-radius:24px;background:var(--card);border:1px solid var(--border);text-align:center;position:relative;overflow:hidden;transition:.3s}
+.dl-card:hover{transform:translateY(-5px);border-color:rgba(52,211,153,.45)}
+.dl-card::before{content:'';position:absolute;inset:0;background:radial-gradient(420px 220px at 50% -10%,rgba(52,211,153,.14),transparent 70%);pointer-events:none}
+.dl-card.cfg::before{background:radial-gradient(420px 220px at 50% -10%,rgba(34,211,238,.14),transparent 70%)}
+.dl-icon{font-size:46px;margin-bottom:18px}
+.dl-card h3{font-size:23px;font-weight:800;margin-bottom:8px;letter-spacing:-.4px}
+.dl-card .dl-desc{color:var(--muted);font-size:14.5px;margin-bottom:26px}
+
+/* ---------- FAQ ---------- */
+.faq-wrap{max-width:760px;margin:0 auto}
+.faq-item{border:1px solid var(--border);border-radius:16px;background:var(--card);margin-bottom:12px;overflow:hidden;transition:.25s}
+.faq-item.open{border-color:rgba(52,211,153,.4)}
+.faq-q{width:100%;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:19px 22px;background:none;border:0;color:var(--text);font:700 16px inherit;cursor:pointer;text-align:left}
+.faq-q .plus{font-size:22px;font-weight:400;color:var(--acc);transition:.3s;flex-shrink:0}
+.faq-item.open .plus{transform:rotate(45deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .38s ease}
+.faq-a p{padding:0 22px 20px;color:var(--muted);font-size:15px;line-height:1.65}
+.faq-a b{color:var(--text)}
+
+/* ---------- FOOTER ---------- */
+footer{border-top:1px solid var(--border);padding:56px 0 36px;background:var(--bg2)}
+.foot-grid{display:flex;justify-content:space-between;gap:36px;flex-wrap:wrap;margin-bottom:36px}
+.foot-brand{max-width:320px}
+.foot-brand .brand{margin-bottom:14px}
+.foot-brand p{color:var(--muted);font-size:14px}
+.foot-col h4{font-size:13px;text-transform:uppercase;letter-spacing:1.8px;color:var(--muted);margin-bottom:16px;font-weight:700}
+.foot-col a{display:block;color:var(--text);font-size:14.5px;margin-bottom:11px;opacity:.85;transition:.2s}
+.foot-col a:hover{color:var(--acc);opacity:1}
+.foot-bottom{border-top:1px solid var(--border);padding-top:24px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:13px}
+.foot-bottom code{font-family:var(--mono);color:var(--acc)}
+
+/* ---------- REVEAL ---------- */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease;transition-delay:var(--d,0s)}
+.reveal.visible{opacity:1;transform:none}
+
+/* ---------- RESPONSIVE ---------- */
+@media(max-width:1020px){
+  .hero-grid{grid-template-columns:1fr;gap:50px;text-align:center}
+  .hero-text p{margin-inline:auto}
+  .hero-btns,.hero-meta{justify-content:center}
+  .chip3{display:none}
+  .feat-grid,.steps{grid-template-columns:repeat(2,1fr)}
+  .stats{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:860px){
+  .nav-links{position:fixed;top:70px;left:0;right:0;background:rgba(6,9,14,.97);backdrop-filter:blur(14px);flex-direction:column;padding:26px;gap:20px;border-bottom:1px solid var(--border);transform:translateY(-130%);transition:.35s;z-index:90}
+  body.menu-open .nav-links{transform:none}
+  .nav-cta{display:none}
+  .burger{display:flex}
+}
+@media(max-width:640px){
+  .hero{padding-top:130px}
+  .feat-grid,.steps,.dl-wrap{grid-template-columns:1fr}
+  .chip1{left:-2%}
+  .chip2{right:-2%}
+  .section{padding:76px 0}
+  .btn-lg{width:100%}
+  .hero-btns .btn{width:100%}
+  .dl-wrap{gap:14px}
+  .dl-card{padding:28px 20px}
+  .dl-card h3{font-size:19px}
+  .faq-q{font-size:15px;padding:16px 18px}
+  .faq-a p{font-size:14px}
+  .cmp-table{min-width:520px}
+  .cmp-table th,.cmp-table td{padding:12px 10px;font-size:13px}
+  .stats{gap:10px}
+  .stat{padding:18px 12px}
+  .stat b{font-size:26px}
+  .stat span{font-size:11.5px}
+  .hero-meta{font-size:12px}
+}
+@media(max-width:380px){
+  .hero{padding-top:110px}
+  .hero-demo{transform:scale(.88);transform-origin:top center;margin-bottom:-35px}
+  h1{font-size:30px;letter-spacing:-1px}
+  .hero-text p{font-size:15px}
+  .phone{width:240px;border-radius:36px;padding:8px}
+  .phone-notch{width:76px;height:18px;top:14px}
+  .screen{border-radius:28px;padding:30px 12px 12px}
+  .vpn-main-btn{width:100px;height:100px}
+  .vpn-pulse-ring{width:125px;height:125px}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<nav id="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="#top">
+      <div class="brand-icon">🛡️</div>
+      <span>Penik&nbsp;<em>VPN</em></span>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="#features">Возможности</a>
+      <a href="#technology">Технологии</a>
+      <a href="#compare">Сравнение</a>
+      <a href="#download">Скачать</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="nav-cta">
+      <a class="btn btn-outline btn-sm" href="#download">Подписка</a>
+      <a class="btn btn-primary btn-sm" href="#download">Скачать APK</a>
+    </div>
+    <button class="burger" id="burger" aria-label="Меню"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<!-- ================= HERO ================= -->
+<header class="hero" id="top">
+  <div class="hero-bg"></div>
+  <div class="container hero-grid">
+    <div class="hero-text">
+      <div class="badge"><span class="pulse"></span> VLESS Reality · ShadowTLS · sing-box core · 0 логов</div>
+      <h1>Интернет без цензуры.<br><span class="grad">Скорость без тормозов.</span></h1>
+      <p><b>PenikVPN</b> — свободный и мощный VPN-клиент нового поколения. Маскирует соединение под обычный веб-серфинг, пробивает жесткие блокировки ТСПУ и DPI, не режет скорость в 4K и не ведет никаких логов.</p>
+      <div class="hero-btns">
+        <a class="btn btn-primary btn-lg" href="#download">Скачать APK (Android)&nbsp;↓</a>
+        <a class="btn btn-outline btn-lg" href="#technology">Как это устроено&nbsp;→</a>
+      </div>
+      <div class="hero-meta">Android 8.0+ · v1.0.0 · Без рекламы · всего 50 ₽ / месяц</div>
+    </div>
+
+    <div class="hero-demo">
+      <div class="chip chip1">⚡ VLESS Reality</div>
+      <div class="chip chip2">🛡️ Bypass DPI</div>
+      <div class="chip chip3">🔀 Split Tunneling</div>
+      
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="screen">
+          <div class="vpn-top">
+            <div class="vpn-title">
+              <span>PenikVPN</span>
+            </div>
+            <div class="vpn-status-chip">
+              <i class="dot"></i> <span>АКТИВЕН</span>
+            </div>
+          </div>
+
+          <div class="vpn-btn-box">
+            <div class="vpn-pulse-ring"></div>
+            <div class="vpn-pulse-ring"></div>
+            <div class="vpn-main-btn" id="vpnToggleBtn" title="Нажмите для переключения">
+              <span class="vpn-btn-icon">⚡</span>
+              <span class="vpn-btn-label">ПОДКЛЮЧЕНО</span>
+              <span class="vpn-btn-sub">VLESS REALITY</span>
+            </div>
+          </div>
+
+          <div class="vpn-server-card">
+            <div class="vpn-flag">🇩🇪</div>
+            <div class="vpn-server-info">
+              <b>Германия / Финляндия</b>
+              <span>1 Gbps · BBR · RAM-only</span>
+            </div>
+            <div class="vpn-ping">
+              <span id="vpnPingVal">28</span> ms
+            </div>
+          </div>
+
+          <div class="vpn-metrics">
+            <div class="vpn-metric-item">
+              <span>СКАЧИВАНИЕ (DL)</span>
+              <b id="vpnDlVal">92.4 MB/s</b>
+            </div>
+            <div class="vpn-metric-item">
+              <span>ОТДАЧА (UL)</span>
+              <b id="vpnUlVal">18.6 MB/s</b>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="stats">
+      <div class="stat reveal" style="--d:.05s"><b>0</b><span>логов и записи активности</span></div>
+      <div class="stat reveal" style="--d:.12s"><b>1 Gbps</b><span>каналы до 700+ Мбит/с</span></div>
+      <div class="stat reveal" style="--d:.19s"><b>100%</b><span>обход ТСПУ, DPI и замедлений</span></div>
+      <div class="stat reveal" style="--d:.26s"><b>&lt; 30 ms</b><span>минимальная задержка</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= MARQUEE ================= -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track" id="mqTrack">
+    <span><i>◆</i>VLESS Reality</span><span><i>◆</i>sing-box core</span><span><i>◆</i>ShadowTLS</span><span><i>◆</i>WireGuard</span><span><i>◆</i>Hysteria 2</span><span><i>◆</i>TUIC</span><span><i>◆</i>Split Tunneling</span><span><i>◆</i>Zero Logs Policy</span><span><i>◆</i>DNS over HTTPS</span><span><i>◆</i>BBR Congestion Control</span><span><i>◆</i>Anti-DPI</span>
+    <span><i>◆</i>VLESS Reality</span><span><i>◆</i>sing-box core</span><span><i>◆</i>ShadowTLS</span><span><i>◆</i>WireGuard</span><span><i>◆</i>Hysteria 2</span><span><i>◆</i>TUIC</span><span><i>◆</i>Split Tunneling</span><span><i>◆</i>Zero Logs Policy</span><span><i>◆</i>DNS over HTTPS</span><span><i>◆</i>BBR Congestion Control</span><span><i>◆</i>Anti-DPI</span>
+  </div>
+</div>
+
+<!-- ================= FEATURES ================= -->
+<section class="section" id="features">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="tag">Возможности</span>
+      <h2>Создан для выживания в жестком интернете</h2>
+      <p>Обычные VPN протоколы блокируются за секунды. PenikVPN использует протоколы нового поколения, которые невозможно отличить от обычного веб-трафика.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat reveal" style="--d:.05s">
+        <span class="ico">🛡️</span>
+        <h3>Непробиваемый обход DPI</h3>
+        <p>Технология VLESS Reality маскирует трафик под обращение к популярным сайтам (Microsoft, Apple, Cloudflare). Провайдерские фильтры ТСПУ не видят VPN-сигнатур.</p>
+        <div class="feat-tags"><span>VLESS Reality</span><span>ShadowTLS</span><span>Anti-DPI</span></div>
+      </div>
+      <div class="feat reveal" style="--d:.12s">
+        <span class="ico">⚡</span>
+        <h3>YouTube 4K и Discord без задержек</h3>
+        <p>Гигабитные каналы (реальная скорость до 700+ Мбит/с) и оптимизация TCP BBR обеспечивают просмотр 4K без буферизации и низкий пинг в онлайн-играх.</p>
+        <div class="feat-tags"><span>1 Gbps</span><span>до 700 Мбит/с</span><span>TCP BBR</span></div>
+      </div>
+      <div class="feat reveal" style="--d:.19s">
+        <span class="ico">🔀</span>
+        <h3>Раздельное туннелирование</h3>
+        <p>Настройте Split Tunneling: пускайте YouTube, Instagram и Discord через VPN, а банковские приложения, Госуслуги и сервисы доставки — напрямую.</p>
+        <div class="feat-tags"><span>Split Tunneling</span><span>Банки без VPN</span></div>
+      </div>
+      <div class="feat reveal" style="--d:.05s">
+        <span class="ico">👁️‍🗨️</span>
+        <h3>Строгий No-Logs (0 логов)</h3>
+        <p>Серверы работают исключительно в оперативной памяти (RAM-only). Мы физически не пишем историю сессий, IP-адреса и DNS-запросы клиентов.</p>
+        <div class="feat-tags"><span>RAM-only</span><span>Zero Logs</span><span>Приватность</span></div>
+      </div>
+      <div class="feat reveal" style="--d:.12s">
+        <span class="ico">🚫</span>
+        <h3>Kill Switch & Защита от утечек</h3>
+        <p>При случайном обрыве связи Kill Switch моментально блокирует передачу данных, чтобы ваш реальный IP и DNS-запросы не утекли в открытую сеть.</p>
+        <div class="feat-tags"><span>Kill Switch</span><span>DoH</span><span>IPv6 Leak Shield</span></div>
+      </div>
+      <div class="feat reveal" style="--d:.19s">
+        <span class="ico">📋</span>
+        <h3>Импорт по QR-коду и подпискам</h3>
+        <p>Добавляйте профили в один клик: сканируйте QR-код, вставляйте ссылку на подписку с автообновлением или настраивайте кастомные правила маршрутизации.</p>
+        <div class="feat-tags"><span>QR-код</span><span>Автоподписка</span><span>Умные правила</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TECHNOLOGY ================= -->
+<section class="section" id="technology" style="background:var(--bg2);border-block:1px solid var(--border)">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="tag">Технологии</span>
+      <h2>Как работает невидимый туннель</h2>
+      <p>Никаких опознавательных знаков VPN. Ваш трафик выглядит как рядовое посещение защищенного сайта по TLS 1.3.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal" style="--d:.05s">
+        <span class="step-num">ШАГ 01</span>
+        <h3>Маскировка рукопожатия</h3>
+        <p>При подключении клиент инициирует сессию с валидным сертификатом доверенного сайта через <code>VLESS Reality</code>. Цензор видит обращение к известному белому серверу.</p>
+      </div>
+      <div class="step reveal" style="--d:.12s">
+        <span class="step-num">ШАГ 02</span>
+        <h3>Шифрование туннеля</h3>
+        <p>Внутри легитимного TLS-соединения поднимается мультиплексированный канал, зашифрованный с использованием <code>ChaCha20-Poly1305</code> или <code>AES-256-GCM</code>.</p>
+      </div>
+      <div class="step reveal" style="--d:.19s">
+        <span class="step-num">ШАГ 03</span>
+        <h3>Маршрутизация sing-box</h3>
+        <p>Высокопроизводительное ядро <code>sing-box</code> на Go мгновенно сортирует пакеты: локальный трафик отправляет напрямую, а остальное — через невидимый туннель.</p>
+      </div>
+    </div>
+
+    <div class="server-panel reveal">
+      <div class="term-head">
+        <span class="tdot r"></span><span class="tdot y"></span><span class="tdot g"></span>
+        <span class="term-title">penik-vpn-core — sing-box live routing log</span>
+      </div>
+      <div class="term-body" id="termBody"></div>
+      <div class="term-caption">Никаких утечек. Полная маскировка под веб-трафик. <b>Блокировки ТСПУ бессильны.</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= COMPARE ================= -->
+<section class="section" id="compare">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="tag">Честное сравнение</span>
+      <h2>PenikVPN vs Обычные VPN vs Старые протоколы</h2>
+      <p>Технологическая разница между современным решением и устаревшими сервисами из магазина приложений.</p>
+    </div>
+    <div class="table-wrap reveal">
+      <table class="cmp-table">
+        <thead>
+          <tr>
+            <th>Критерий</th>
+            <th class="penik-col">PenikVPN</th>
+            <th>VPN из Play Store</th>
+            <th>OpenVPN / WireGuard</th>
+            <th>Платные сервисы (Happ / боты)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Обход ТСПУ и DPI</td>
+            <td class="penik-col yes">✅ Reality / ShadowTLS</td>
+            <td class="no">❌ Блокируются сразу</td>
+            <td class="no">❌ Блокировка сигнатуры</td>
+            <td class="yes">✅ Тоже VLESS Reality</td>
+          </tr>
+          <tr>
+            <td>Открытое ядро (sing-box/Xray)</td>
+            <td class="penik-col yes">✅ 100% Open-source</td>
+            <td class="no">❌ Закрытый код</td>
+            <td class="yes">✅ Open-source</td>
+            <td class="yes">✅ Да (на базе sing-box / Happ)</td>
+          </tr>
+          <tr>
+            <td>Маршрутизация (GeoIP, CIDR, Split)</td>
+            <td class="penik-col yes">✅ Вшита из коробки</td>
+            <td class="no">❌ Нет</td>
+            <td class="meh">⚠️ Ручные скрипты</td>
+            <td class="yes">✅ Поддерживается клиентом</td>
+          </tr>
+          <tr>
+            <td>Абонентская плата</td>
+            <td class="penik-col yes">✅ Всего 50 ₽ / месяц</td>
+            <td class="meh">⚠️ Реклама / подписка</td>
+            <td class="meh">⚠️ Оплата своего VPS</td>
+            <td class="no">❌ 300–700 ₽ каждый месяц</td>
+          </tr>
+          <tr>
+            <td>Лимит устройств на подписку</td>
+            <td class="penik-col yes">✅ Без ограничений (∞)</td>
+            <td class="meh">⚠️ 1–3 устройства</td>
+            <td class="yes">✅ Без ограничений</td>
+            <td class="no">❌ Строго 2–5 устройств</td>
+          </tr>
+          <tr>
+            <td>Лимит трафика в месяц</td>
+            <td class="penik-col yes">✅ Безлимит (1 Gbps)</td>
+            <td class="no">❌ 1–2 ГБ в день</td>
+            <td class="meh">⚠️ Трафик вашего VPS</td>
+            <td class="meh">⚠️ Часто лимиты 100–300 ГБ</td>
+          </tr>
+          <tr>
+            <td>Простота первого запуска</td>
+            <td class="penik-col yes">✅ Скачал и нажал старт</td>
+            <td class="meh">⚠️ Куча рекламы</td>
+            <td class="no">❌ Сложный конфиг</td>
+            <td class="no">❌ Бот → оплата → ссылка → Happ</td>
+          </tr>
+          <tr>
+            <td>Платежный след и анонимность</td>
+            <td class="penik-col yes">✅ 0 данных (без карт и TG)</td>
+            <td class="no">⚠️ Google аккаунт</td>
+            <td class="meh">⚠️ Оплата хостинга</td>
+            <td class="no">❌ Оплата через СБП / привязка Telegram</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cmp-note">// честная цена 50 ₽ в месяц по себестоимости серверов: без наценок в 10 раз, без скрытых ограничений и без лимитов на устройства.</p>
+  </div>
+</section>
+
+<!-- ================= DOWNLOAD ================= -->
+<section class="section" id="download" style="background:var(--bg2);border-block:1px solid var(--border)">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="tag">Установка</span>
+      <h2>Начни пользоваться прямо сейчас</h2>
+      <p>Установите официальный APK для Android или подключите подписку на любых других устройствах.</p>
+    </div>
+    <div class="dl-wrap">
+      <div class="dl-card reveal" style="--d:.05s">
+        <div class="dl-icon">🤖</div>
+        <h3>Android · Клиент APK</h3>
+        <p class="dl-desc">Полноценное приложение: переключение в 1 клик, автозапуск, раздельное туннелирование и поддержка всех современных протоколов.</p>
+        <a class="btn btn-primary btn-lg" href="#download" style="width:100%">Скачать PenikVPN APK&nbsp;↓</a>
+        <div style="margin-top:14px;font-size:13px;color:var(--muted);">Android 8.0+ · ARM64 / x86_64 · Прямая установка без Google Play</div>
+      </div>
+      <div class="dl-card cfg reveal" style="--d:.14s">
+        <div class="dl-icon">⚙️</div>
+        <h3>ПК, iOS и Роутеры</h3>
+        <p class="dl-desc">Используйте универсальную ссылку подписки через клиенты sing-box, v2rayN, Nekoray (Windows/Linux) или Streisand, Shadowrocket (iOS).</p>
+        <a class="btn btn-outline btn-lg" href="#faq" style="width:100%">Инструкция по настройке&nbsp;→</a>
+        <div style="margin-top:14px;font-size:13px;color:var(--muted);">Подходит для любых сторонних клиентов с поддержкой VLESS Reality</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FAQ ================= -->
+<section class="section" id="faq">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="tag">FAQ</span>
+      <h2>Часто задаваемые вопросы</h2>
+      <p>Всё, что вам нужно знать о работе PenikVPN.</p>
+    </div>
+    <div class="faq-wrap">
+      <div class="faq-item reveal" style="--d:.05s">
+        <button class="faq-q" type="button">Почему PenikVPN не блокируется провайдерами и ТСПУ? <span class="plus">+</span></button>
+        <div class="faq-a"><p>Большинство традиционных VPN (OpenVPN, WireGuard, IPsec) имеют четкую сигнатуру пакетов, которую легко распознают системы DPI. В <b>PenikVPN</b> используется протокол <b>VLESS Reality</b>: он заимствует легитимный сертификат у нейтральных мировых ресурсов (например, Microsoft) и полностью мимикрирует под защищенную сессию HTTPS (TLS 1.3). С точки зрения цензора трафик выглядит как обычный просмотр сайта.</p></div>
+      </div>
+      <div class="faq-item reveal" style="--d:.1s">
+        <button class="faq-q" type="button">Будут ли работать Сбербанк, Тинькофф и Госуслуги? <span class="plus">+</span></button>
+        <div class="faq-a"><p>Да! Благодаря функции <b>Раздельного туннелирования (Split Tunneling)</b> вы можете указать, какие приложения должны работать напрямую через мобильный интернет или домашний Wi-Fi. Российские сервисы продолжат работать без ошибок доступа и капч, пока VPN активен для остальных программ.</p></div>
+      </div>
+      <div class="faq-item reveal" style="--d:.15s">
+        <button class="faq-q" type="button">Ведутся ли логи подключений и сайтов? <span class="plus">+</span></button>
+        <div class="faq-a"><p><b>Категорически нет.</b> Мы придерживаемся строгой политики No-Logs. Серверы функционируют без постоянной дисковой записи журналов (RAM-only), а клиент не собирает никакой телеметрии или аналитики о том, куда и когда вы выходите.</p></div>
+      </div>
+      <div class="faq-item reveal" style="--d:.2s">
+        <button class="faq-q" type="button">Будет ли YouTube работать в качестве 4K? <span class="plus">+</span></button>
+        <div class="faq-a"><p>Да. Серверные ноды (Германия, Финляндия) подключены к 1-гигабитным портам со скоростью до 700+ Мбит/с и включенным алгоритмом контроля перегрузок <b>TCP BBR</b> от Google. Видеопотоки YouTube воспроизводятся моментально без искусственного замедления и буферизации.</p></div>
+      </div>
+      <div class="faq-item reveal" style="--d:.25s">
+        <button class="faq-q" type="button">Можно ли настроить PenikVPN на компьютере или iPhone? <span class="plus">+</span></button>
+        <div class="faq-a"><p>Да. Протоколы PenikVPN стандартизированы. Вы можете использовать ссылку на профиль подписки в проверенных открытых приложениях: <b>Nekoray / v2rayN / sing-box</b> (Windows, macOS, Linux) и <b>Streisand / Shadowrocket / FoXray</b> (iOS).</p></div>
+      </div>
+      <div class="faq-item reveal" style="--d:.3s">
+        <button class="faq-q" type="button">Почему в приложении нет рекламы? <span class="plus">+</span></button>
+        <div class="faq-a"><p>PenikVPN создан как открытый инструмент цифровой свободы и приватности. Мы не встраиваем рекламные баннеры, трекеры и рекламные SDK, которые замедляют телефон и собирают персональные данные.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="#top">
+          <div class="brand-icon">🛡️</div>
+          <span>Penik&nbsp;<em>VPN</em></span>
+        </a>
+        <p>Свободный VPN без компромиссов. Защищенный туннель, который не видит цензура и не режет скорость.</p>
+      </div>
+      <div class="foot-col">
+        <h4>Продукт</h4>
+        <a href="#download">Скачать APK</a>
+        <a href="#features">Возможности</a>
+        <a href="#technology">Технологии</a>
+        <a href="#faq">Вопросы и ответы</a>
+      </div>
+      <div class="foot-col">
+        <h4>Протоколы</h4>
+        <a href="#technology">VLESS Reality</a>
+        <a href="#technology">ShadowTLS</a>
+        <a href="#technology">sing-box core</a>
+        <a href="#technology">WireGuard</a>
+      </div>
+      <div class="foot-col">
+        <h4>Безопасность</h4>
+        <a href="#features">Zero-Logs Policy</a>
+        <a href="#features">Split Tunneling</a>
+        <a href="#features">DNS Leak Protection</a>
+        <a href="#features">Kill Switch</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© Penik VPN, 2026. Свободный интернет для каждого.</span>
+      <span>работает даже на интернете Кирилла · <code>bypass_dpi = true · 0_logs = true</code></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ---------- NAV ---------- */
+const navEl = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  navEl.classList.toggle('scrolled', window.scrollY > 20);
+});
+const burgerBtn = document.getElementById('burger');
+burgerBtn.addEventListener('click', () => document.body.classList.toggle('menu-open'));
+document.querySelectorAll('.nav-links a').forEach(link => {
+  link.addEventListener('click', () => document.body.classList.remove('menu-open'));
+});
+
+/* ---------- REVEAL ON SCROLL ---------- */
+const revealIO = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      revealIO.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => revealIO.observe(el));
+
+/* ---------- PHONE LIVE DEMO SIMULATION ---------- */
+const vpnToggleBtn = document.getElementById('vpnToggleBtn');
+const vpnPingVal = document.getElementById('vpnPingVal');
+const vpnDlVal = document.getElementById('vpnDlVal');
+const vpnUlVal = document.getElementById('vpnUlVal');
+
+let isConnected = true;
+vpnToggleBtn.addEventListener('click', () => {
+  isConnected = !isConnected;
+  if (!isConnected) {
+    vpnToggleBtn.style.border = '2px solid #f87171';
+    vpnToggleBtn.style.boxShadow = '0 0 25px rgba(248,113,113,.3)';
+    vpnToggleBtn.querySelector('.vpn-btn-icon').textContent = '✕';
+    vpnToggleBtn.querySelector('.vpn-btn-icon').style.color = '#f87171';
+    vpnToggleBtn.querySelector('.vpn-btn-label').textContent = 'ОТКЛЮЧЕНО';
+    vpnToggleBtn.querySelector('.vpn-btn-sub').textContent = 'НАЖМИТЕ ДЛЯ СВЯЗИ';
+    vpnPingVal.textContent = '—';
+    vpnDlVal.textContent = '0.0 MB/s';
+    vpnUlVal.textContent = '0.0 MB/s';
+    document.querySelector('.vpn-status-chip').innerHTML = '<span style="color:#f87171">●</span> ПАУЗА';
+  } else {
+    vpnToggleBtn.style.border = '2px solid var(--acc)';
+    vpnToggleBtn.style.boxShadow = '0 0 35px rgba(52,211,153,.35)';
+    vpnToggleBtn.querySelector('.vpn-btn-icon').textContent = '⚡';
+    vpnToggleBtn.querySelector('.vpn-btn-icon').style.color = 'var(--acc)';
+    vpnToggleBtn.querySelector('.vpn-btn-label').textContent = 'ПОДКЛЮЧЕНО';
+    vpnToggleBtn.querySelector('.vpn-btn-sub').textContent = 'VLESS REALITY';
+    document.querySelector('.vpn-status-chip').innerHTML = '<i class="dot"></i> <span>АКТИВЕН</span>';
+  }
+});
+
+// Live metrics jitter
+setInterval(() => {
+  if (isConnected) {
+    const ping = 22 + Math.floor(Math.random() * 8);
+    const dl = (85 + Math.random() * 18).toFixed(1);
+    const ul = (14 + Math.random() * 8).toFixed(1);
+    vpnPingVal.textContent = ping;
+    vpnDlVal.textContent = dl + ' MB/s';
+    vpnUlVal.textContent = ul + ' MB/s';
+  }
+}, 2200);
+
+/* ---------- SERVER / ROUTING LOG TERMINAL ---------- */
+const termBody = document.getElementById('termBody');
+
+function hexBytes(count) {
+  let out = [];
+  for (let i = 0; i < count; i++) out.push(((Math.random() * 256) | 0).toString(16).padStart(2, '0'));
+  return out.join('');
+}
+
+const termScript = [
+  { level: 'INFO', tag: 'CORE', text: 'sing-box core 1.9.4 initialized in TUN mode (tun0, MTU=9000)' },
+  { level: 'INFO', tag: 'REALITY', text: 'handshake ok dest=www.microsoft.com:443 server_name=microsoft.com' },
+  { level: 'DEBUG', tag: 'ROUTER', text: 'match[domain_suffix=googlevideo.com] -> outbound: 🇩🇪 Frankfurt-VLESS' },
+  { level: 'INFO', tag: 'DOH', text: 'query discord.com via 1.1.1.1:443 (TLS) resolved in 8ms' },
+  { level: 'DEBUG', tag: 'ROUTER', text: 'match[domain_suffix=sberbank.ru] -> outbound: DIRECT (bypass VPN)' },
+  { level: 'INFO', tag: 'SPEED', text: 'bbr congestion window updated: rtt=24.1ms cwnd=84 pkts' },
+  { level: 'DEBUG', tag: 'ROUTER', text: 'match[domain_suffix=instagram.com] -> outbound: 🇩🇪 Frankfurt-VLESS' },
+  { level: 'INFO', tag: 'TUNNEL', text: `multiplex stream opened sid=${Math.floor(Math.random()*900+100)} cipher=chacha20-poly1305` },
+  { level: 'DEBUG', tag: 'ROUTER', text: 'match[domain_suffix=gosuslugi.ru] -> outbound: DIRECT (bypass VPN)' },
+  { level: 'INFO', tag: 'DPI_SHIELD', text: 'anti-censorship check: SNI spoofing verified, DPI bypass OK' },
+  { level: 'INFO', tag: 'METRICS', text: 'active bandwidth: download=94.8 MB/s, upload=17.2 MB/s, loss=0%' },
+];
+
+let scriptIdx = 0;
+function playTermScript() {
+  const step = termScript[scriptIdx % termScript.length];
+  const lineEl = document.createElement('div');
+  lineEl.className = 'tline';
+  
+  const tagColor = step.tag === 'REALITY' ? 'var(--acc2)' : step.tag === 'ROUTER' ? '#a78bfa' : 'var(--acc)';
+  const now = new Date().toTimeString().split(' ')[0];
+  
+  lineEl.innerHTML = 
+    `<span style="color:#5b6577">[${now}]</span> ` +
+    `<span style="color:${tagColor};font-weight:700">[${step.tag}]</span> ` +
+    `<span style="color:#cbd5e1">${step.text}</span>`;
+
+  termBody.appendChild(lineEl);
+  while (termBody.children.length > 10) termBody.removeChild(termBody.firstChild);
+  termBody.scrollTop = termBody.scrollHeight;
+
+  scriptIdx++;
+  setTimeout(playTermScript, 1200 + Math.random() * 800);
+}
+playTermScript();
+
+/* ---------- FAQ ACCORDION ---------- */
+document.querySelectorAll('.faq-q').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const item = btn.parentElement;
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(opened => {
+      opened.classList.remove('open');
+      opened.querySelector('.faq-a').style.maxHeight = null;
+    });
+    if (!wasOpen) {
+      item.classList.add('open');
+      const ans = item.querySelector('.faq-a');
+      ans.style.maxHeight = ans.scrollHeight + 'px';
+    }
+  });
+});
+</script>
+</body>
+</html>

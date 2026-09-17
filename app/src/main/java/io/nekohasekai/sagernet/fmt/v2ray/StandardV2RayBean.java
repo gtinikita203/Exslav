@@ -636,7 +636,9 @@ public abstract class StandardV2RayBean extends AbstractBean {
         }
         bean.utlsFingerprint = utlsFingerprint;
         bean.realityFingerprint = realityFingerprint;
-        bean.realityDisableX25519Mlkem768 = realityDisableX25519Mlkem768;
+        if (bean.realityDisableX25519Mlkem768 == null) {
+            bean.realityDisableX25519Mlkem768 = false;
+        }
         bean.hy2DownMbps = hy2DownMbps;
         bean.hy2UpMbps = hy2UpMbps;
         bean.grpcServiceNameCompat = grpcServiceNameCompat;

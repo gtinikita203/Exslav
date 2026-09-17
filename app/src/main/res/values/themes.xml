@@ -46,6 +46,16 @@
             @style/ThemeOverlay.MaterialComponents.MaterialAlertDialog.SagerNet
         </item>
 
+        <item name="materialCardViewStyle">@style/Widget.Penik.Card</item>
+
+    </style>
+
+    <style name="Widget.Penik.Card" parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">?colorSurface</item>
+        <item name="strokeColor">@color/penik_border</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardElevation">2dp</item>
     </style>
 
     <style name="Theme.SagerNet.Dialog" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
@@ -252,11 +262,13 @@
     </style>
 
     <style name="Theme.SagerNet.Indigo">
-        <item name="colorPrimary">@color/material_indigo_500</item>
-        <item name="colorPrimaryDark">@color/material_indigo_700</item>
-        <item name="colorAccent">@color/material_indigo_accent_200</item>
-        <item name="colorMaterial100">@color/material_indigo_100</item>
-        <item name="colorMaterial300">@color/material_indigo_300</item>
+        <item name="colorPrimary">@color/penik_accent</item>
+        <item name="colorPrimaryDark">@color/penik_background</item>
+        <item name="colorAccent">@color/penik_accent_light</item>
+        <item name="colorMaterial100">#E8EAF6</item>
+        <item name="colorMaterial300">@color/penik_accent</item>
+        <item name="fabColorBackground">@color/penik_accent</item>
+        <item name="selectedColorPrimary">@color/penik_accent</item>
     </style>
 
     <style name="Theme.SagerNet.LightBlue">
@@ -444,11 +456,13 @@
     </style>
 
     <style name="Theme.SagerNet.Dialog.Indigo">
-        <item name="colorPrimary">@color/material_indigo_500</item>
-        <item name="colorPrimaryDark">@color/material_indigo_700</item>
-        <item name="colorAccent">@color/material_indigo_accent_200</item>
-        <item name="colorMaterial100">@color/material_indigo_100</item>
-        <item name="colorMaterial300">@color/material_indigo_300</item>
+        <item name="colorPrimary">@color/penik_accent</item>
+        <item name="colorPrimaryDark">@color/penik_background</item>
+        <item name="colorAccent">@color/penik_accent_light</item>
+        <item name="colorMaterial100">#E8EAF6</item>
+        <item name="colorMaterial300">@color/penik_accent</item>
+        <item name="fabColorBackground">@color/penik_accent</item>
+        <item name="selectedColorPrimary">@color/penik_accent</item>
     </style>
 
     <style name="Theme.SagerNet.Dialog.LightBlue">

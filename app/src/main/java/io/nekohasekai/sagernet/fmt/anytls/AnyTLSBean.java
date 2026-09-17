@@ -204,7 +204,9 @@ public class AnyTLSBean extends AbstractBean {
         bean.echEnabled = echEnabled;
         bean.echConfigList = echConfigList;
         bean.realityFingerprint = realityFingerprint;
-        bean.realityDisableX25519Mlkem768 = realityDisableX25519Mlkem768;
+        if (bean.realityDisableX25519Mlkem768 == null) {
+            bean.realityDisableX25519Mlkem768 = false;
+        }
         bean.disableReuse = disableReuse;
         bean.echQueryName = echQueryName;
         bean.realitySpiderX = realitySpiderX;

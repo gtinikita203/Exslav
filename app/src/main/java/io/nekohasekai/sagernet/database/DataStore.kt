@@ -48,6 +48,11 @@ object DataStore : OnPreferenceDataStoreChangeListener {
         configurationStore.registerChangeListener(this)
 
         // migrate from 0.14.10
+        if (configurationStore.getBoolean("migrated_reality_mlkem768_fix_v1") != true) {
+            configurationStore.putBoolean("migrated_reality_mlkem768_fix_v1", true)
+            configurationStore.putBoolean(Key.REALITY_DISABLE_X25519MLKEM768, false)
+            configurationStore.putBoolean(Key.SERVER_REALITY_DISABLE_X25519MLKEM768, false)
+        }
         val ipv6Mode0 = configurationStore.getString("ipv6Mode0")?.toIntOrNull()
         // 0: Disable, 1: Enable, 2: Prefer, 3: Only
         if (configurationStore.getBoolean("enableVPNInterfaceIPv6Address") == null) {

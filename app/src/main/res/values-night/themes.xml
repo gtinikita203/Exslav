@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Theme.SagerNet" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="actionBarStyle">@style/Widget.MaterialComponents.ActionBar.Solid</item>
+        <item name="actionModeCloseDrawable">@drawable/ic_navigation_close</item>
+        <item name="colorButtonNormal">?colorAccent</item>
+
+        <item name="android:windowBackground">@color/penik_background</item>
+        <item name="android:colorBackground">@color/penik_background</item>
+        <item name="colorSurface">@color/penik_panel</item>
+        <item name="android:navigationBarColor">@color/penik_background</item>
+        <item name="android:statusBarColor">@color/penik_background</item>
+
+        <item name="colorPrimary">@color/penik_accent</item>
+        <item name="colorPrimaryDark">@color/penik_background</item>
+        <item name="colorAccent">@color/penik_accent_light</item>
+
+        <item name="colorMaterial100">#E8EAF6</item>
+        <item name="colorMaterial300">@color/penik_accent</item>
+
+        <item name="accentOrTextSecondary">?colorAccent</item>
+        <item name="accentOrTextPrimary">?colorAccent</item>
+        <item name="primaryOrTextSecondary">?colorPrimary</item>
+        <item name="primaryOrTextPrimary">?colorPrimary</item>
+
+        <item name="fabColorBackground">@color/penik_accent</item>
+        <item name="selectedColorPrimary">@color/penik_accent</item>
+        <item name="actionBarTheme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
+        <item name="tabTextColor">#99EEEEF5</item>
+        <item name="tabSelectedTextColor">@color/penik_text_primary</item>
+        <item name="tabIndicatorColor">@color/penik_accent</item>
+        <item name="tabRippleColor">@color/penik_accent</item>
+        <item name="whiteOrTextPrimary">@color/penik_text_primary</item>
+
+        <item name="windowActionModeOverlay">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+
+        <item name="chipStyle">@style/Widget.MaterialComponents.Chip.Choice.SagerNet</item>
+        <item name="itemShapeAppearance">@style/ShapeAppearance.MaterialComponents.MediumComponent</item>
+        <item name="materialCardViewStyle">@style/Widget.Penik.Card</item>
+
+        <item name="alertDialogTheme">@style/ThemeOverlay.MaterialComponents.MaterialAlertDialog.SagerNet</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.MaterialComponents.MaterialAlertDialog.SagerNet</item>
+    </style>
+
+    <style name="Widget.Penik.Card" parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">@color/penik_panel</item>
+        <item name="strokeColor">@color/penik_border</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardElevation">0dp</item>
+    </style>
+
+</resources>

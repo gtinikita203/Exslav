@@ -97,6 +97,31 @@ class SagerNet : Application(),
             }
         }
 
+        if (DataStore.configurationStore.getBoolean("migrated_db_mlkem768_fix_v1") != true) {
+            DataStore.configurationStore.putBoolean("migrated_db_mlkem768_fix_v1", true)
+            runOnDefaultDispatcher {
+                runCatching {
+                    val all = SagerDatabase.proxyDao.allProxies()
+                    val updated = mutableListOf<io.nekohasekai.sagernet.database.ProxyEntity>()
+                    for (proxy in all) {
+                        val bean = proxy.bean
+                        if (bean is io.nekohasekai.sagernet.fmt.v2ray.StandardV2RayBean && bean.realityDisableX25519Mlkem768 == true) {
+                            bean.realityDisableX25519Mlkem768 = false
+                            proxy.putBean(bean)
+                            updated.add(proxy)
+                        } else if (bean is io.nekohasekai.sagernet.fmt.anytls.AnyTLSBean && bean.realityDisableX25519Mlkem768 == true) {
+                            bean.realityDisableX25519Mlkem768 = false
+                            proxy.putBean(bean)
+                            updated.add(proxy)
+                        }
+                    }
+                    if (updated.isNotEmpty()) {
+                        SagerDatabase.proxyDao.updateProxy(updated)
+                    }
+                }
+            }
+        }
+
         val processName = if (Build.VERSION.SDK_INT >= 28) {
             getProcessName()
         } else {

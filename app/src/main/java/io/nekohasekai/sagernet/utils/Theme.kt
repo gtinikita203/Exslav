@@ -53,7 +53,7 @@ object Theme {
 
     const val DYNAMIC = 21
 
-    private fun defaultTheme() = PINK
+    private fun defaultTheme() = INDIGO
 
     fun apply(context: Context) {
         context.setTheme(getTheme())

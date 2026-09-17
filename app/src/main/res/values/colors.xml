@@ -300,4 +300,19 @@
     <color name="ansi_bright_magenta">#A36AC7</color>
     <color name="ansi_bright_cyan">#3971ED</color>
     <color name="ansi_bright_white">#ffffff</color>
+
+    <!-- Penik Design System Colors -->
+    <color name="penik_background">#0D0D12</color>
+    <color name="penik_panel">#13131A</color>
+    <color name="penik_panel_secondary">#1A1A24</color>
+    <color name="penik_border">#252535</color>
+    <color name="penik_border_light">#2E2E42</color>
+    <color name="penik_accent">#5B6EF5</color>
+    <color name="penik_accent_hover">#4A5DE4</color>
+    <color name="penik_accent_light">#7A8AF8</color>
+    <color name="penik_text_primary">#EEEEF5</color>
+    <color name="penik_text_muted">#7B7B9B</color>
+    <color name="penik_success">#4EC97A</color>
+    <color name="penik_danger">#F05A5A</color>
+    <color name="penik_warning">#F5A623</color>
 </resources>

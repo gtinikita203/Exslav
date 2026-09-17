@@ -278,6 +278,8 @@
     <string name="route_proxy">Прокси</string>
     <string name="route_name">Название маршрута</string>
     <string name="delete_route_prompt">Удалить этот маршрут?</string>
+    <string name="route_import_happ_success">Импортирован профиль «%1$s» (%2$d правил)</string>
+    <string name="route_import_happ_prompt">Импортировать правила маршрутизации «%s»?</string>
     <string name="route_add">Создать маршрут</string>
     <string name="menu_route">Маршруты</string>
     <string name="metered_summary">Подсказывать системе, что VPN следует рассматривать как сеть с лимитным тарифным планом</string>

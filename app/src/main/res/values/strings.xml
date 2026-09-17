@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">Exslav</string>
+    <string name="app_name" translatable="false">PenikVPN</string>
     <string name="wdtt_workers">Мощность (воркеры)</string>
     <string name="project">Project</string>
     <string name="github">Source code</string>
@@ -128,6 +128,8 @@
     <string name="metered_summary">Hint system to treat VPN as metered</string>
     <string name="menu_route">Route</string>
     <string name="route_add">Create route</string>
+    <string name="route_import_happ_success">Imported %1$s (%2$d rules)</string>
+    <string name="route_import_happ_prompt">Import routing rules «%s»?</string>
     <string name="delete_route_prompt">Are you sure you want to remove this route?</string>
     <string name="route_name">Route name</string>
     <string name="route_proxy">Proxy</string>

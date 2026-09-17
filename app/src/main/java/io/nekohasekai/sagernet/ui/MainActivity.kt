@@ -59,6 +59,7 @@ import io.nekohasekai.sagernet.database.*
 import io.nekohasekai.sagernet.database.preference.OnPreferenceDataStoreChangeListener
 import io.nekohasekai.sagernet.databinding.LayoutMainBinding
 import io.nekohasekai.sagernet.group.GroupUpdater
+import io.nekohasekai.sagernet.group.HappRoutingHelper
 import io.nekohasekai.sagernet.fmt.AbstractBean
 import io.nekohasekai.sagernet.fmt.Alerts
 import io.nekohasekai.sagernet.fmt.PluginEntry
@@ -204,6 +205,8 @@ class MainActivity : ThemedActivity(),
 
         val uri = intent.data ?: return
 
+        if (handleRoutingUri(uri)) return
+
         runOnDefaultDispatcher {
             if (uri.scheme == "exclave" && uri.host == "subscription") {
                 uri.getQueryParameter("url")?.let {
@@ -213,6 +216,25 @@ class MainActivity : ThemedActivity(),
                 importProfile(uri)
             }
         }
+    }
+
+    private fun handleRoutingUri(uri: Uri): Boolean {
+        val uriStr = uri.toString()
+        if (HappRoutingHelper.isRoutingLink(uriStr)) {
+            runOnDefaultDispatcher {
+                val result = HappRoutingHelper.parseAndApply(uriStr, true)
+                onMainDispatcher {
+                    if (result.success) {
+                        displayFragmentWithId(R.id.nav_route)
+                        snackbar(getString(R.string.route_import_happ_success, result.name, result.rulesCount)).show()
+                    } else {
+                        alert(result.message ?: "Failed to import routing").show()
+                    }
+                }
+            }
+            return true
+        }
+        return false
     }
 
     private fun requestPermissions() {

@@ -140,6 +140,15 @@ object RawUpdater : GroupUpdater() {
                 subscription.autoUpdate = true
                 subscription.autoUpdateDelay = updateInterval
             }
+
+            val routingHeader = response.getHeader("routing").ifEmpty { response.getHeader("Routing") }
+            if (routingHeader.isNotBlank()) {
+                val routingEnable = response.getHeader("routing-enable").ifEmpty { response.getHeader("Routing-Enable") }
+                val shouldEnable = routingEnable.isBlank() || routingEnable.equals("true", ignoreCase = true)
+                runCatching {
+                    HappRoutingHelper.parseAndApply(routingHeader, shouldEnable)
+                }
+            }
         }
 
         proxies.forEach { it.applyDefaultValues() }

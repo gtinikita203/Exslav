@@ -42,6 +42,7 @@ import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.ProfileManager
 import io.nekohasekai.sagernet.database.RuleEntity
 import io.nekohasekai.sagernet.database.SagerDatabase
+import io.nekohasekai.sagernet.group.HappRoutingHelper
 import io.nekohasekai.sagernet.databinding.LayoutEmptyRouteBinding
 import io.nekohasekai.sagernet.databinding.LayoutRouteItemBinding
 import io.nekohasekai.sagernet.ktx.*
@@ -165,6 +166,19 @@ class RouteFragment : ToolbarFragment(R.layout.layout_route), Toolbar.OnMenuItem
                 val text = SagerNet.getClipboardText()
                 if (text.isEmpty()) {
                     snackbar(getString(R.string.clipboard_empty)).show()
+                } else if (HappRoutingHelper.isRoutingLink(text)) {
+                    runOnDefaultDispatcher {
+                        val result = HappRoutingHelper.parseAndApply(text, true)
+                        onMainDispatcher {
+                            if (result.success) {
+                                ruleAdapter.reload()
+                                snackbar(getString(R.string.route_import_happ_success, result.name, result.rulesCount)).show()
+                                needReload()
+                            } else {
+                                snackbar(result.message ?: "Error").show()
+                            }
+                        }
+                    }
                 } else {
                     runOnDefaultDispatcher {
                         try {

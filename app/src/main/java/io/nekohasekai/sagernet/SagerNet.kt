@@ -101,7 +101,7 @@ class SagerNet : Application(),
             DataStore.configurationStore.putBoolean("migrated_db_mlkem768_fix_v1", true)
             runOnDefaultDispatcher {
                 runCatching {
-                    val all = SagerDatabase.proxyDao.allProxies()
+                    val all = SagerDatabase.proxyDao.getAll()
                     val updated = mutableListOf<io.nekohasekai.sagernet.database.ProxyEntity>()
                     for (proxy in all) {
                         val bean = proxy.bean

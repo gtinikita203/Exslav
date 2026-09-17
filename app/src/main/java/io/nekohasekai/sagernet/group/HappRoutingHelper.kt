@@ -83,14 +83,14 @@ object HappRoutingHelper {
             // 3. DNS Hosts
             val dnsHostsObj = json.getAsJsonObject("DnsHosts")
             if (dnsHostsObj != null && dnsHostsObj.entrySet().isNotEmpty()) {
-                val existingHosts = DataStore.dnsHosts.lines().filter { it.isNotBlank() }.toMutableList()
+                val existingHosts = DataStore.hosts.lines().filter { it.isNotBlank() }.toMutableList()
                 for ((host, ipEl) in dnsHostsObj.entrySet()) {
                     val ip = ipEl.asString
                     if (existingHosts.none { it.startsWith("$host ") }) {
                         existingHosts.add("$host $ip")
                     }
                 }
-                DataStore.dnsHosts = existingHosts.joinToString("\n")
+                DataStore.hosts = existingHosts.joinToString("\n")
             }
 
             // 4. Parse Rules
@@ -175,7 +175,7 @@ object HappRoutingHelper {
                 DataStore.routeMode = RouteMode.RULE
             }
 
-            ProfileManager.postReload()
+            ProfileManager.ruleIterator { onCleared() }
 
             ImportResult(true, name = profileName, rulesCount = newRules.size)
         } catch (e: Exception) {

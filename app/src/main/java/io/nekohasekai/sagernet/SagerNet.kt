@@ -104,7 +104,7 @@ class SagerNet : Application(),
                     val all = SagerDatabase.proxyDao.getAll()
                     val updated = mutableListOf<io.nekohasekai.sagernet.database.ProxyEntity>()
                     for (proxy in all) {
-                        val bean = proxy.bean
+                        val bean = proxy.requireBean()
                         if (bean is io.nekohasekai.sagernet.fmt.v2ray.StandardV2RayBean && bean.realityDisableX25519Mlkem768 == true) {
                             bean.realityDisableX25519Mlkem768 = false
                             proxy.putBean(bean)

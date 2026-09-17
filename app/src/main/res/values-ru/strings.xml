@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="menu_home">Главная</string>
     <string name="header_type">Обфускация заголовка</string>
     <string name="network">Сеть</string>
     <string name="security">Шифрование транспортного уровня</string>

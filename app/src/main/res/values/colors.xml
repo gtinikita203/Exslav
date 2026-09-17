@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- PenikVPN Palette -->
+    <color name="penik_bg">#06080D</color>
+    <color name="penik_bg_card">#0D111A</color>
+    <color name="penik_border">#1A2436</color>
+    <color name="penik_acc">#34D399</color>
+    <color name="penik_acc2">#22D3EE</color>
+    <color name="penik_acc_glow">#3334D399</color>
+    <color name="penik_red">#F87171</color>
+    <color name="penik_red_glow">#33F87171</color>
+    <color name="penik_text_primary">#E9EDF4</color>
+    <color name="penik_text_muted">#8B94A7</color>
+
     <integer-array name="material_colors" tools:ignore="InconsistentArrays">
         <item>@color/material_red_500</item>
         <item>@color/material_pink_500</item>

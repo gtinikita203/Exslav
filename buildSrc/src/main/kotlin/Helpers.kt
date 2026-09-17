@@ -232,7 +232,7 @@ fun Project.setupApp() {
                 (output as? VariantOutputImpl)?.let { variantOutputImpl ->
                     val versionName = variantOutputImpl.versionName.orNull.orEmpty()
                     variantOutputImpl.outputFileName.set(variantOutputImpl.outputFileName.get()
-                        .replace(project.name, "Exslav-$versionName")
+                        .replace(project.name, "PenikVPN-$versionName")
                         .replace("-release", "")
                         .replace("-oss", "")
                     )

@@ -80,7 +80,7 @@ class MainActivity : ThemedActivity(),
 
     override val onBackPressedCallback = object : OnBackPressedCallback(enabled = false) {
         override fun handleOnBackPressed() {
-            displayFragmentWithId(R.id.nav_configuration)
+            displayFragmentWithId(R.id.nav_home)
         }
     }
 
@@ -144,7 +144,7 @@ class MainActivity : ThemedActivity(),
         }
 
         if (savedInstanceState == null) {
-            displayFragmentWithId(R.id.nav_configuration)
+            displayFragmentWithId(R.id.nav_home)
         }
 
         binding.fab.setOnClickListener {
@@ -351,17 +351,28 @@ class MainActivity : ThemedActivity(),
 
 
     fun displayFragment(fragment: ToolbarFragment) {
-        if (fragment !is LogcatFragment) {
-            binding.fab.show()
+        if (fragment is HomeFragment) {
+            binding.fab.hide()
+            binding.fabProgress.visibility = View.GONE
+            binding.stats.visibility = View.GONE
+        } else {
+            if (fragment !is LogcatFragment) {
+                binding.fab.show()
+            }
+            binding.stats.visibility = View.VISIBLE
         }
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_holder, fragment)
             .commitAllowingStateLoss()
         binding.drawerLayout.closeDrawers()
+        onBackPressedCallback.isEnabled = fragment !is HomeFragment
     }
 
     fun displayFragmentWithId(@IdRes id: Int): Boolean {
         when (id) {
+            R.id.nav_home -> {
+                displayFragment(HomeFragment())
+            }
             R.id.nav_configuration -> {
                 displayFragment(ConfigurationFragment())
                 connection.bandwidthTimeout = connection.bandwidthTimeout
@@ -409,6 +420,7 @@ class MainActivity : ThemedActivity(),
 
         binding.fab.changeState(state, this.state, animate)
         binding.stats.changeState(state)
+        (supportFragmentManager.findFragmentById(R.id.fragment_holder) as? HomeFragment)?.updateState(state)
         if (msg != null) snackbar(msg).show()
         this.state = state
 
@@ -544,13 +556,19 @@ class MainActivity : ThemedActivity(),
         if (it) snackbar(R.string.vpn_permission_denied).show()
     }
 
+    fun toggleService() {
+        if (state.canStop) SagerNet.stopService() else connect.launch(null)
+    }
+
     override fun trafficUpdated(profileId: Long, stats: TrafficStats, isCurrent: Boolean) {
         if (profileId == 0L) return
 
-        if (isCurrent) binding.stats.updateTraffic(
-            stats.txRateProxy.takeIf { it > 0 } ?: stats.txTotal,
-            stats.rxRateProxy.takeIf { it > 0 } ?: stats.rxTotal
-        )
+        if (isCurrent) {
+            val tx = stats.txRateProxy.takeIf { it > 0 } ?: stats.txTotal
+            val rx = stats.rxRateProxy.takeIf { it > 0 } ?: stats.rxTotal
+            binding.stats.updateTraffic(tx, rx)
+            (supportFragmentManager.findFragmentById(R.id.fragment_holder) as? HomeFragment)?.updateTraffic(tx, rx)
+        }
 
         runOnDefaultDispatcher {
             ProfileManager.postTrafficUpdated(profileId, stats)
@@ -561,6 +579,7 @@ class MainActivity : ThemedActivity(),
         runOnDefaultDispatcher {
             ProfileManager.postUpdate(profileId)
         }
+        (supportFragmentManager.findFragmentById(R.id.fragment_holder) as? HomeFragment)?.updateActiveProfile()
     }
 
     override fun observatoryResultsUpdated(groupId: Long) {

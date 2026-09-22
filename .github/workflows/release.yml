@@ -164,4 +164,4 @@ jobs:
             gh release delete latest --yes --cleanup-tag
           fi
           gh release create latest ./apks/* --latest --target "${GITHUB_SHA}" --title "Latest" --notes "$NOTES"
-          gh release view latest --json tagName,isLatest,assets --jq '{tag: .tagName, latest: .isLatest, assets: [.assets[].name]}'
+          gh release view latest --json tagName,assets,url --jq '{tag: .tagName, url: .url, assets: [.assets[].name]}'

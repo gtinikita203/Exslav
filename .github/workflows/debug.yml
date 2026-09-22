@@ -2,13 +2,23 @@ name: Debug Build
 on:
   push:
     branches:
+      - main
+      - master
+      - UI
+      - NewUI
       - dev*
     paths:
       - "app/**"
       - "buildSrc/**"
       - "library/**"
+      - "plugin/**"
+      - "wdtt/**"
+      - "run"
       - ".github/workflows/debug.yml"
   workflow_dispatch:
+concurrency:
+  group: debug-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     name: Build

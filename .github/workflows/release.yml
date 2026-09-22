@@ -2,11 +2,18 @@ name: Release Build
 on:
   push:
     branches:
+      - main
+      - master
+      - UI
+      - NewUI
       - dev*
     paths:
       - "app/**"
       - "buildSrc/**"
       - "library/**"
+      - "plugin/**"
+      - "wdtt/**"
+      - "run"
       - ".github/workflows/release.yml"
   workflow_dispatch:
     inputs:
@@ -19,6 +26,9 @@ on:
       tag:
         description: 'Release Tag'
         required: false
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   build:
     name: Build
@@ -104,7 +114,7 @@ jobs:
           path: app/build/outputs/apk/legacy/release
   publish:
     name: Publish Release
-    if: github.event.inputs.release == 'y' && github.event.inputs.tag != ''
+    if: github.event_name == 'push' || (github.event.inputs.release == 'y' && github.event.inputs.tag != '')
     runs-on: ubuntu-latest
     needs: build
     env:
@@ -126,15 +136,26 @@ jobs:
         with:
           name: APKs-legacy
           path: artifacts/legacy
-      - name: Publish Pre-release
-        if: github.event.inputs.prerelease == 'y'
+      - name: Collect APKs
         run: |
           mkdir apks
           find artifacts -name "*.apk" -exec cp {} apks \;
-          gh release create ${{ github.event.inputs.tag }} --notes="" --title=${{ github.event.inputs.tag }} --prerelease ./apks/*
-      - name: Publish Release
-        if: github.event.inputs.prerelease != 'y'
+          ls -la apks
+      - name: Publish tagged release
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.tag != ''
         run: |
-          mkdir apks
-          find artifacts -name "*.apk" -exec cp {} apks \;
-          gh release create ${{ github.event.inputs.tag }} --notes="" --title=${{ github.event.inputs.tag }} ./apks/*
+          if [ "${{ github.event.inputs.prerelease }}" = "y" ]; then
+            gh release create "${{ github.event.inputs.tag }}" --notes="" --title="${{ github.event.inputs.tag }}" --prerelease ./apks/*
+          else
+            gh release create "${{ github.event.inputs.tag }}" --notes="" --title="${{ github.event.inputs.tag }}" ./apks/*
+          fi
+      - name: Publish latest release
+        if: github.event_name == 'push' || github.event.inputs.tag == ''
+        run: |
+          set -euo pipefail
+          NOTES="Build ${GITHUB_SHA} from ${GITHUB_REF_NAME}"
+          if gh release view latest >/dev/null 2>&1; then
+            gh release delete latest --yes --cleanup-tag
+          fi
+          gh release create latest ./apks/* --latest --target "${GITHUB_SHA}" --title "Latest" --notes "$NOTES"
+          gh release view latest --json tagName,isLatest,assets --jq '{tag: .tagName, latest: .isLatest, assets: [.assets[].name]}'

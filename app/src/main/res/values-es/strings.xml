@@ -201,7 +201,7 @@
     </plurals>
     <string name="menu_traffic">Tráfico</string>
     <string name="group_default">Sin grupo</string>
-    <string name="plugin_exists_but_on_shit_system">El perfil %s requiere el plugin %s, pero tu proveedor de equipo propietario (usualmente gigantes del capitalismo de vigilancia y creadores de malware) alteró tu Android, haciendo que el plugin sea inutilizable.</string>
+    <string name="plugin_exists_but_on_shit_system">El perfil %1$s requiere el plugin %2$s, pero tu proveedor de equipo propietario (usualmente gigantes del capitalismo de vigilancia y creadores de malware) alteró tu Android, haciendo que el plugin sea inutilizable.</string>
     <string name="delete_group_prompt">¿Realmente quieres eliminar este grupo?</string>
     <string name="subscription_type">Tipo de suscripción</string>
     <string name="group_type">Tipo de grupo</string>
@@ -211,12 +211,12 @@
     <string name="update_when_connected_only_sum">Evita la filtración de la dirección IP</string>
     <string name="subscription_user_agent">Agente de usuario</string>
     <string name="missing_plugin">Falta plugin</string>
-    <string name="profile_requiring_plugin">El perfil %s requiere el plugin %s, pero no se encontró.</string>
+    <string name="profile_requiring_plugin">El perfil %1$s requiere el plugin %2$s, pero no se encontró.</string>
     <string name="update_subscription_warning">El proxy no está conectado, ¿realmente quieres continuar con la actualización?</string>
     <string name="subscription_update">Actualización de suscripción</string>
     <string name="subscription_update_message">Actualizando %s …</string>
     <string name="experimental_settings">Ajustes experimentales</string>
-    <string name="subscription_traffic">%s usado / %s restante</string>
+    <string name="subscription_traffic">%1$s usado / %2$s restante</string>
     <string name="apps">Aplicaciones</string>
     <string name="experimental_no_termination_signal">No envía la señal de terminación de conexión unidireccional para conexiones TCP cuando se transfieren por VMess. Esto romperá algunas aplicaciones.</string>
     <string name="group_order">Ordenar</string>
@@ -473,8 +473,8 @@
     <string name="fileSize_pebibyte">PiB</string>
     <string name="hijack_dns_message">Secuestra las consultas DNS que no se envían a la dirección DNS de TUN con el escaneo de DNS</string>
     <string name="available">%d ms</string>
-    <string name="traffic_uplink">%s | %s/s ↑</string>
-    <string name="traffic_downlink">%s | %s/s ↓</string>
+    <string name="traffic_uplink">%1$s | %2$s/s ↑</string>
+    <string name="traffic_downlink">%1$s | %2$s/s ↓</string>
     <string name="browser_forwarder_hint">Descargue v2ray-extra.zip desde el lanzamiento de v2ray-core y coloque index.html e index.js en Android/data/%s/files o importe index.html e index.js como recursos de ruta.</string>
     <string name="mieru_multiplexing_level">Nivel de multiplexación</string>
     <string name="route_asset_add">Añadir recurso de ruta</string>

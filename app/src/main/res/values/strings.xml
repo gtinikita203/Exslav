@@ -312,13 +312,13 @@
     <string name="subscription_user_agent">User agent</string>
     <string name="confirm">Confirm</string>
     <string name="missing_plugin">Missing plugin</string>
-    <string name="profile_requiring_plugin">Profile %s requires %s plugin, but it was not found.</string>
+    <string name="profile_requiring_plugin">Profile %1$s requires %2$s plugin, but it was not found.</string>
     <string name="update_subscription_warning">Proxy is not connected, are you sure you want to continue updating?</string>
     <string name="service_subscription">Subscription Update Service</string>
     <string name="subscription_update">Subscription update</string>
     <string name="subscription_update_message">Updating %s …</string>
     <string name="subscription_used">%s used</string>
-    <string name="subscription_traffic">%s used / %s remaining</string>
+    <string name="subscription_traffic">%1$s used / %2$s remaining</string>
     <string name="subscription_remaining_of_total">%1$s remaining of %2$s</string>
     <string name="connection_test_on_network_change">Auto test on network change</string>
     <string name="connection_test_on_network_change_sum">Automatically test proxy latencies when connecting or switching networks</string>
@@ -350,9 +350,9 @@
     <string name="group_order_origin">By original order</string>
     <string name="group_order_by_name">Alphabetically</string>
     <string name="group_order_by_delay">By latency</string>
-    <string name="plugin_exists_but_on_shit_system">Profile %s requires %s plugin, but your proprietary equipment vendor (usually surveillance capital giants and malware maker) tampered with your Android, making the plugin unusable.</string>
-    <string name="traffic_uplink">%s | %s/s ↑</string>
-    <string name="traffic_downlink">%s | %s/s ↓</string>
+    <string name="plugin_exists_but_on_shit_system">Profile %1$s requires %2$s plugin, but your proprietary equipment vendor (usually surveillance capital giants and malware maker) tampered with your Android, making the plugin unusable.</string>
+    <string name="traffic_uplink">%1$s | %2$s/s ↑</string>
+    <string name="traffic_downlink">%1$s | %2$s/s ↓</string>
     <string name="traffic_uplink_total" translatable="false">%s ↑</string>
     <string name="traffic_downlink_total" translatable="false">%s ↓</string>
     <string name="traffic_active">Active</string>

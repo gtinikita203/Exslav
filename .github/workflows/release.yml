@@ -95,13 +95,15 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.gradle
-          key: gradle-${{ hashFiles('**/*.gradle.kts') }}
+          key: gradle-release-v2-${{ hashFiles('**/*.gradle.kts') }}-${{ hashFiles('gradle.properties') }}
       - name: Gradle Build
         run: |
           echo "sdk.dir=${ANDROID_HOME}" > local.properties
           export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
-          ./gradlew :app:downloadAssets
-          ./gradlew :app:assembleOssRelease :app:assembleLegacyRelease
+          ./gradlew --no-daemon :app:downloadAssets
+          # Build variants one-by-one: concurrent OSS+Legacy KSP races on Room schema JSON
+          ./gradlew --no-daemon :app:assembleOssRelease
+          ./gradlew --no-daemon :app:assembleLegacyRelease
       - name: Upload Artifacts
         uses: actions/upload-artifact@v7
         with:

@@ -53,9 +53,9 @@
     <string name="subscription_user_agent">UserAgent</string>
     <string name="confirm">Conferma</string>
     <string name="missing_plugin">Plugin Mancante</string>
-    <string name="profile_requiring_plugin">Il profilo %s richiede il plugin %s, ma non è installato.</string>
+    <string name="profile_requiring_plugin">Il profilo %1$s richiede il plugin %2$s, ma non è installato.</string>
     <string name="subscription_used">%s Utilizzato</string>
-    <string name="subscription_traffic">%s Utilizzato / %s Rimanente</string>
+    <string name="subscription_traffic">%1$s Utilizzato / %2$s Rimanente</string>
     <string name="subscription_import">Importa iscrizione</string>
     <string name="subscription_import_message">Confermi di voler importare l\'iscrizione %s\? Se proviene da una fonte non attendibile, fare ciò potrebbe causare IP leak.</string>
     <string name="profile_import_message">Confermi di voler importare il profilo %s\?</string>
@@ -304,7 +304,7 @@
     <string name="experimental_settings">Sperimentale</string>
     <string name="group_order_by_name">Per Nome</string>
     <string name="group_order_by_delay">Per Delay</string>
-    <string name="plugin_exists_but_on_shit_system">Il profilo %s richiede il plugin %s, ma il produttore del tuo dispositivo (solitamente qualche campione dello spionaggio e produttore di malware) ha manomesso il vostro Android, rendendo il plugin inutilizzabile.</string>
+    <string name="plugin_exists_but_on_shit_system">Il profilo %1$s richiede il plugin %2$s, ma il produttore del tuo dispositivo (solitamente qualche campione dello spionaggio e produttore di malware) ha manomesso il vostro Android, rendendo il plugin inutilizzabile.</string>
     <string name="copy_package_name">Copia Nome Pacchetto</string>
     <string name="create_rule">Crea Regola</string>
     <string name="copy_success">Copiato!</string>

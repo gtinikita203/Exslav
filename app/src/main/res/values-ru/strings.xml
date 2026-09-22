@@ -114,7 +114,7 @@
     <string name="profile_import">Импорт профиля</string>
     <string name="subscription_import_message">Подтвердите, что хотите импортировать подписку %s\? Если вы импортируете из ненадёжного источника, это может привести к утечке вашего IP-адреса и такого поведения.</string>
     <string name="subscription_import">Импорт подписки</string>
-    <string name="subscription_traffic">%s использовано / %s осталось</string>
+    <string name="subscription_traffic">%1$s использовано / %2$s осталось</string>
     <string name="subscription_used">%s использовано</string>
     <string name="subscription_remaining_of_total">Осталось %1$s из %2$s</string>
     <string name="connection_test_on_network_change">Автотест при смене сети</string>
@@ -128,7 +128,7 @@
     <string name="subscription_update">Обновление подписки</string>
     <string name="service_subscription">Служба обновления подписки</string>
     <string name="update_subscription_warning">Прокси-сервер не подключён, продолжить обновление?</string>
-    <string name="profile_requiring_plugin">Профиль %s требует установки подключаемого модуля %s, но он не найден.</string>
+    <string name="profile_requiring_plugin">Профиль %1$s требует установки подключаемого модуля %2$s, но он не найден.</string>
     <string name="missing_plugin">Отсутствующий плагин</string>
     <string name="confirm">Подтверждение</string>
     <string name="subscription_user_agent">UserAgent</string>
@@ -333,11 +333,11 @@
         <item quantity="few">%d TCP-соединения</item>
         <item quantity="many">%d TCP-соединений</item>
     </plurals>
-    <string name="traffic_uplink">%s | %s/с ↑</string>
-    <string name="traffic_downlink">%s | %s/с ↓</string>
+    <string name="traffic_uplink">%1$s | %2$s/с ↑</string>
+    <string name="traffic_downlink">%1$s | %2$s/с ↓</string>
     <string name="traffic_stats">Статистика</string>
     <string name="traffic_active">Активный</string>
-    <string name="plugin_exists_but_on_shit_system">Профиль %s требует плагин %s, но поставщик вашего проприетарного оборудования (обычно это большие компании, занимающиеся слежкой и производители вредоносного ПО) изменил ваш Android, сделав плагин непригодным для использования.</string>
+    <string name="plugin_exists_but_on_shit_system">Профиль %1$s требует плагин %2$s, но поставщик вашего проприетарного оборудования (обычно это большие компании, занимающиеся слежкой и производители вредоносного ПО) изменил ваш Android, сделав плагин непригодным для использования.</string>
     <string name="group_order_by_delay">По задержке</string>
     <string name="group_order_by_name">По имени</string>
     <string name="group_order_origin">По происхождению</string>

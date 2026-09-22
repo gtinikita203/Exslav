@@ -14,6 +14,10 @@ on:
       - "plugin/**"
       - "wdtt/**"
       - "run"
+      - "gradle.properties"
+      - "gradle/**"
+      - "version.properties"
+      - "**/*.gradle.kts"
       - ".github/workflows/debug.yml"
   workflow_dispatch:
 concurrency:

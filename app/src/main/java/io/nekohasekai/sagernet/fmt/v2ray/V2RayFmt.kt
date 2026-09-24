@@ -1176,3 +1176,41 @@ fun parseRayUUID(str: String): String? {
     }
     return Uuid.fromByteArray(uuid.toByteArray()).toHexDashString()
 }
+
+// https://github.com/XTLS/Xray-core/blob/52a412d9e2f5c2a5142b1b4e2ab3771dacb8b120/infra/conf/common.go#L292-L380
+fun JsonObject.getXrayRangeAsTriple(key: String): Triple<Int, Int, Boolean>? {
+    this.getString(key, ignoreCase = true)?.also { value ->
+        value.toIntOrNull()?.also {
+            return Triple(it, it, true)
+        }
+        if (value.isEmpty()) {
+            return Triple(0, 0, true)
+        }
+        val pair = if (value.startsWith("-")) {
+            val parts = value.split("-", limit = 3)
+            if (parts.size < 3) {
+                listOf(value)
+            } else {
+                listOf(parts[0] + "-" + parts[1], parts[2])
+            }
+        } else {
+            value.split("-", limit = 2)
+        }
+        if (pair.size == 2) {
+            val from = pair[0].toIntOrNull()
+            val to = pair[1].toIntOrNull()
+            return if (from != null && to != null) {
+                Triple(minOf(from, to), maxOf(from, to), false)
+            } else null
+        }
+    }
+    this.getInt(key, ignoreCase = true)?.also {
+        return Triple(it, it, true)
+    }
+    return null
+}
+
+fun JsonObject.getXrayRange(key: String): String? {
+    val value = this.getXrayRangeAsTriple(key) ?: return null
+    return if (value.third) "${value.first}" else "${value.first}-${value.second}"
+}

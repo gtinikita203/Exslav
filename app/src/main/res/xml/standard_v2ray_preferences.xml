@@ -229,7 +229,7 @@
             app:title="@string/reality_mldsa65_verify"
             app:useSimpleSummaryProvider="true" />
         <io.nekohasekai.sagernet.widget.SimpleMenuPreference
-            app:entries="@array/reality_fingerprint_value"
+            app:entries="@array/reality_fingerprint_entry"
             app:entryValues="@array/reality_fingerprint_value"
             app:icon="@drawable/ic_baseline_fingerprint_24"
             app:key="serverRealityFingerprint"

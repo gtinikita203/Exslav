@@ -154,7 +154,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
         if (realityPublicKey == null) realityPublicKey = "";
         if (realityShortId == null) realityShortId = "";
         if (realityMldsa65Verify == null) realityMldsa65Verify = "";
-        if (realityFingerprint == null) realityFingerprint = "chrome";
+        if (realityFingerprint == null) realityFingerprint = "";
         if (realityDisableX25519Mlkem768 == null) realityDisableX25519Mlkem768 = false;
         if (realitySpiderX == null) realitySpiderX = "";
 
@@ -454,6 +454,10 @@ public abstract class StandardV2RayBean extends AbstractBean {
             case "tls": {
                 sni = input.readString();
                 alpn = input.readString();
+                if (version <= 39 && type.equals("quic") && (alpn == null || NetsKt.listByLineOrComma(alpn).isEmpty())) {
+                    // https://github.com/ExclaveNetwork/Exclave/issues/488
+                    alpn = "h2\nhttp/1.1";
+                }
                 if (version >= 1) {
                     certificates = input.readString();
                     pinnedPeerCertificateChainSha256 = input.readString();
